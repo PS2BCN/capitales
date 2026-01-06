@@ -2,106 +2,183 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Game Boy Adivinanza</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>C64 ADIVINANZA</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
-        body { 
-            background-color: #333; 
-            font-family: 'Press Start 2P', cursive;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: screen;
-            margin: 0;
-        }
-
-        /* Carcasa de la Game Boy */
-        .gameboy {
-            background-color: #999;
-            width: 320px;
-            height: 520px;
-            border-radius: 10px 10px 60px 10px;
-            padding: 20px;
-            box-shadow: inset -10px -10px 0px rgba(0,0,0,0.2), 10px 10px 20px rgba(0,0,0,0.5);
-            position: relative;
-        }
-
-        /* Marco de la pantalla */
-        .screen-frame {
-            background-color: #444;
-            width: 100%;
-            height: 240px;
-            border-radius: 10px 10px 40px 10px;
-            padding: 25px;
-            margin-bottom: 30px;
-        }
-
-        /* Pantalla LCD (Verde oliva clásico) */
-        .lcd {
-            background-color: #9bbc0f;
-            width: 100%;
-            height: 100%;
-            border: 4px solid #8b9506;
-            color: #0f380f;
-            padding: 10px;
-            font-size: 8px;
+        /* Estilo retro Commodore 64 */
+        body {
+            background-color: #4040ff; /* Azul exterior */
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Courier New', Courier, monospace;
+            color: #a0a0ff; /* Azul claro / Celeste */
         }
 
-        /* Botones */
-        .d-pad {
-            width: 80px;
-            height: 80px;
+        #screen {
+            background-color: #0000aa; /* Azul interior */
+            width: 80%;
+            max-width: 600px;
+            padding: 20px;
+            border: 20px solid #4040ff;
+            box-shadow: 10px 10px 0px #000;
+            text-align: left;
             position: relative;
         }
-        .btn-a, .btn-b {
-            width: 45px;
-            height: 45px;
-            background-color: #a9185c;
-            border-radius: 50%;
-            box-shadow: 2px 2px 0px #70103d;
+
+        h1, p {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 10px 0;
         }
 
-        .input-gameboy {
-            background-color: #8b9506;
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 15px;
+            background-color: #a0a0ff;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        input {
+            background: transparent;
             border: none;
-            border-bottom: 2px solid #0f380f;
-            width: 60px;
-            color: #0f380f;
-            text-align: center;
+            color: #a0a0ff;
+            font-family: inherit;
+            font-size: 1.2rem;
+            text-transform: uppercase;
             outline: none;
-            font-family: 'Press Start 2P', cursive;
+            width: 100px;
         }
 
-        #historial { height: 50px; overflow-y: auto; margin-top: 5px; line-height: 1.5; }
+        button {
+            background-color: #a0a0ff;
+            color: #0000aa;
+            border: none;
+            padding: 5px 15px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+
+        button:hover { background-color: #fff; }
+
+        .back-link {
+            margin-top: 20px;
+            color: #a0a0ff;
+            text-decoration: none;
+            font-size: 0.8rem;
+        }
+
+        /* Mini Player Integrado */
+        .mini-player {
+            margin-top: 30px;
+            background: #0000aa;
+            border: 2px solid #a0a0ff;
+            padding: 10px;
+            width: 300px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
-    <div class="gameboy mt-10">
-        <div class="screen-frame">
-            <div class="lcd">
-                <div class="flex justify-between mb-2">
-                    <span id="pista-audio">OFF</span>
-                    <span id="lbl-intentos">I:0</span>
-                </div>
-
-                <div class="text-center mb-2" style="font-size: 10px;">ADIVINA 1-1000</div>
-                
-                <div id="historial">-- SISTEMA --</div>
-
-                <div class="flex-1 flex flex-col items-center justify-center">
-                    <p id="pista" class="mb-2 text-center">ESPERANDO...</p>
-                    <input type="number" id="inputNum" class="input-gameboy" placeholder="000">
-                </div>
-            </div>
+    <div id="screen">
+        <p>**** COMMODORE 64 BASIC V2 ****</p>
+        <p>64K RAM SYSTEM  38911 BASIC BYTES FREE</p>
+        <p>READY.</p>
+        <p>LOAD "ADIVINANZA",8,1</p>
+        <p>SEARCHING FOR ADIVINANZA</p>
+        <p>LOADING</p>
+        <p>READY.</p>
+        <p>RUN</p>
+        <hr style="border: 1px solid #a0a0ff;">
+        
+        <h1>GUESS THE NUMBER (1-100)</h1>
+        <p id="message">ADIVINA EL NUMERO DEL 1 AL 100:</p>
+        <div>
+            <span style="color:white">></span>
+            <input type="number" id="guessInput" min="1" max="100" autofocus>
+            <span class="cursor"></span>
         </div>
+        <button onclick="checkGuess()">ENTER</button>
+        <p>INTENTOS: <span id="attempts">0</span></p>
+    </div>
 
-        <div class="flex justify-between items-center px-2">
-            <div class="d-pad">
-                <div class="absolute top-1/2 left-0
+    <a href="index.html" class="back-link">RETURN TO MENU</a>
+
+    <div class="mini-player">
+        <div id="song-info" style="font-size: 10px; margin-bottom: 5px;">SID CHIP READY...</div>
+        <button onclick="prevSong()">⏮</button>
+        <button id="play-pause" onclick="togglePlay()">▶</button>
+        <button onclick="nextSong()">⏭</button>
+        <audio id="audio-player"></audio>
+    </div>
+
+    <script>
+        // Lógica del Juego
+        const secretNumber = Math.floor(Math.random() * 100) + 1;
+        let attempts = 0;
+
+        function checkGuess() {
+            const input = document.getElementById('guessInput');
+            const message = document.getElementById('message');
+            const attemptsDisplay = document.getElementById('attempts');
+            const guess = parseInt(input.value);
+
+            if (isNaN(guess)) return;
+
+            attempts++;
+            attemptsDisplay.innerText = attempts;
+
+            if (guess === secretNumber) {
+                message.innerText = "!!! GANASTE !!! EL NUMERO ERA " + secretNumber;
+                message.style.color = "#fff";
+                input.disabled = true;
+            } else if (guess < secretNumber) {
+                message.innerText = "MAS ALTO...";
+            } else {
+                message.innerText = "MAS BAJO...";
+            }
+            input.value = "";
+            input.focus();
+        }
+
+        // Lógica del Reproductor
+        const audio = document.getElementById('audio-player');
+        const playBtn = document.getElementById('play-pause');
+        const songTitle = document.getElementById('song-info');
+        const songs = ['musica_fondo.mp3', 'musica_fondo1.mp3', 'musica_fondo2.mp3', 'musica_fondo3.mp3', 'musica_fondo4.mp3', 'musica_fondo5.mp3', 'musica_fondo6.mp3'];
+        let currentSongIndex = 0;
+
+        function loadSong(index) {
+            audio.src = songs[index];
+            songTitle.innerText = `SID: ${songs[index]}`;
+        }
+        function togglePlay() {
+            if (audio.paused) { audio.play(); playBtn.innerText = "⏸"; }
+            else { audio.pause(); playBtn.innerText = "▶"; }
+        }
+        function nextSong() {
+            currentSongIndex = (currentSongIndex + 1) % songs.length;
+            loadSong(currentSongIndex);
+            audio.play();
+            playBtn.innerText = "⏸";
+        }
+        function prevSong() {
+            currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+            loadSong(currentSongIndex);
+            audio.play();
+            playBtn.innerText = "⏸";
+        }
+        audio.onended = nextSong;
+        loadSong(currentSongIndex);
+    </script>
+</body>
+</html>
