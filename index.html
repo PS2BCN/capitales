@@ -2,114 +2,220 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Juego de Países Colindantes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Panel de Aplicaciones</title>
     <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --bg: #f4f7f6;
+            --text: #333;
+            --player-bg: #fff;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background: #111;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding-bottom: 120px; /* Espacio para el reproductor */
+        }
+
+        header {
+            background-color: var(--secondary);
             color: white;
+            width: 100%;
+            padding: 2rem 0;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            width: 90%;
+            max-width: 1000px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            text-decoration: none;
+            color: var(--secondary);
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+        /* Estilos del Reproductor */
+        .music-player {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: var(--player-bg);
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+            padding: 15px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn-player {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            font-size: 1.2rem;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
         }
 
-        .game {
-            background: #222;
-            padding: 25px;
-            border-radius: 10px;
-            width: 350px;
-            text-align: center;
+        .btn-player:hover { background: var(--primary); }
+
+        .song-info {
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--secondary);
+            font-weight: bold;
         }
 
-        input {
-            width: 90%;
-            padding: 8px;
+        #progress-bar {
+            width: 80%;
+            max-width: 500px;
+            height: 5px;
             margin-top: 10px;
-            font-size: 16px;
-        }
-
-        button {
-            margin-top: 10px;
-            padding: 8px 15px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        .correct {
-            color: lime;
-        }
-
-        .wrong {
-            color: red;
         }
     </style>
 </head>
 <body>
 
-<div class="game">
-    <h2>🌍 País actual:</h2>
-    <h1 id="country"></h1>
+    <header>
+        <h1>Mis Proyectos Web</h1>
+        <p>Selecciona una aplicación o disfruta de la música</p>
+    </header>
 
-    <p>Escribe un país que haga frontera:</p>
-    <input type="text" id="answer" placeholder="Ej: Francia">
-    <br>
-    <button onclick="checkAnswer()">Comprobar</button>
-    <button onclick="nextCountry()">Siguiente</button>
+    <div class="container">
+        <a href="snake.html" class="card"><div class="icon">🐍</div>Snake</a>
+        <a href="capitales.html" class="card"><div class="icon">🌍</div>Capitales</a>
+        <a href="fronteras.html" class="card"><div class="icon">🗺️</div>Fronteras</a>
+        <a href="ip.html" class="card"><div class="icon">🔍</div>Rastreador IP</a>
+    </div>
 
-    <p id="message"></p>
-    <p>⭐ Puntuación: <span id="score">0</span></p>
-</div>
+    <div class="music-player">
+        <div class="song-info" id="song-title">Cargando música...</div>
+        
+        <div class="player-controls">
+            <button class="btn-player" onclick="prevSong()">⏮</button>
+            <button class="btn-player" id="play-pause" onclick="togglePlay()">▶</button>
+            <button class="btn-player" onclick="nextSong()">⏭</button>
+            <input type="range" id="volume" min="0" max="1" step="0.1" value="0.5" onchange="adjustVolume()">
+        </div>
+        
+        <input type="range" id="progress-bar" value="0" max="100" onchange="seek()">
+        
+        <audio id="audio-player">
+            Your browser does not support the audio element.
+        </audio>
+    </div>
 
-<script>
-    // BASE DE DATOS DE PAÍSES Y FRONTERAS
-    const borders = {
-        "España": ["Francia", "Portugal", "Andorra", "Marruecos"],
-        "Francia": ["España", "Bélgica", "Alemania", "Italia", "Suiza", "Luxemburgo"],
-        "Alemania": ["Francia", "Polonia", "Suiza", "Austria", "Bélgica", "Países Bajos"],
-        "Brasil": ["Argentina", "Uruguay", "Paraguay", "Bolivia", "Perú", "Colombia", "Venezuela"],
-        "Argentina": ["Chile", "Uruguay", "Brasil", "Bolivia", "Paraguay"],
-        "México": ["Estados Unidos", "Guatemala", "Belice"],
-        "China": ["India", "Rusia", "Mongolia", "Pakistán", "Nepal"],
-        "Italia": ["Francia", "Suiza", "Austria", "Eslovenia"],
-        "Portugal": ["España"]
-    };
+    <script>
+        const audio = document.getElementById('audio-player');
+        const playBtn = document.getElementById('play-pause');
+        const songTitle = document.getElementById('song-title');
+        const progressBar = document.getElementById('progress-bar');
 
-    const countries = Object.keys(borders);
-    let currentCountry = "";
-    let score = 0;
+        const songs = [
+            'musica_fondo.mp3',
+            'musica_fondo1.mp3',
+            'musica_fondo2.mp3',
+            'musica_fondo3.mp3',
+            'musica_fondo4.mp3',
+            'musica_fondo5.mp3',
+            'musica_fondo6.mp3'
+        ];
 
-    function randomCountry() {
-        return countries[Math.floor(Math.random() * countries.length)];
-    }
+        let currentSongIndex = 0;
 
-    function nextCountry() {
-        currentCountry = randomCountry();
-        document.getElementById("country").textContent = currentCountry;
-        document.getElementById("message").textContent = "";
-        document.getElementById("answer").value = "";
-    }
-
-    function checkAnswer() {
-        const userAnswer = document.getElementById("answer").value.trim();
-        const validBorders = borders[currentCountry];
-
-        if (validBorders.map(p => p.toLowerCase()).includes(userAnswer.toLowerCase())) {
-            score++;
-            document.getElementById("message").textContent = "✅ Correcto";
-            document.getElementById("message").className = "correct";
-            document.getElementById("score").textContent = score;
-        } else {
-            document.getElementById("message").textContent =
-                "❌ Incorrecto. Ejemplos: " + validBorders.join(", ");
-            document.getElementById("message").className = "wrong";
+        function loadSong(index) {
+            audio.src = songs[index];
+            songTitle.innerText = `Sonando: ${songs[index]}`;
         }
-    }
 
-    // Iniciar juego
-    nextCountry();
-</script>
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play();
+                playBtn.innerText = "⏸";
+            } else {
+                audio.pause();
+                playBtn.innerText = "▶";
+            }
+        }
 
+        function nextSong() {
+            currentSongIndex = (currentSongIndex + 1) % songs.length;
+            loadSong(currentSongIndex);
+            audio.play();
+            playBtn.innerText = "⏸";
+        }
+
+        function prevSong() {
+            currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
+            loadSong(currentSongIndex);
+            audio.play();
+            playBtn.innerText = "⏸";
+        }
+
+        function adjustVolume() {
+            audio.volume = document.getElementById('volume').value;
+        }
+
+        function seek() {
+            const time = (progressBar.value * audio.duration) / 100;
+            audio.currentTime = time;
+        }
+
+        // Actualizar barra de progreso
+        audio.ontimeupdate = () => {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            progressBar.value = progress || 0;
+        };
+
+        // Pasar a la siguiente automáticamente
+        audio.onended = nextSong;
+
+        // Cargar primera canción al iniciar
+        loadSong(currentSongIndex);
+    </script>
 </body>
 </html>
