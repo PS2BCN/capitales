@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultor Fiscal Patrimonio 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .active-tab { border-bottom: 4px solid #0f172a; color: #0f172a; font-weight: bold; background: #f8fafc; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans">
+
+    <div class="max-w-5xl mx-auto py-10 px-4">
+        <header class="bg-slate-900 text-white p-6 rounded-t-xl shadow-lg flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">Consultor Fiscal de Patrimonio 2026</h1>
+                <p class="text-slate-400 text-sm">Liquidación Comparativa e Informe PDF</p>
+            </div>
+        </header>
+
+        <div class="bg-white border-b flex shadow-sm">
+            <button onclick="changeTab('simulador')" id="btn-simulador" class="px-8 py-4 text-slate-500 hover:text-slate-800 transition active-tab">Simulador</button>
+            <button onclick="changeTab('tablas')" id="btn-tablas" class="px-8 py-4 text-slate-500 hover:text-slate-800 transition">Normativa</button>
+        </div>
+
+        <main class="bg-white p-6 rounded-b-xl shadow-lg">
+            
+            <div id="simulador" class="tab-content active">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                        <h2 class="font-bold text-slate-700 uppercase text-xs tracking-wider mb-4">Entrada de Datos</h2>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Comunidad Autónoma</label>
+                            <select id="ccaa" class="w-full border-2 p-2 rounded-lg focus:border-slate-900 outline-none">
+                                <option value="Cataluña">Cataluña</option>
+                                <option value="Madrid">Madrid</option>
+                                <option value="Andalucía">Andalucía</option>
+                                <option value="C. Valenciana">C. Valenciana</option>
+                                <option value="Aragón">Aragón</option>
+                                <option value="Resto España">Resto España</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Vivienda Habitual (€)</label>
+                            <input type="number" id="viv" value="0" class="w-full border-2 p-2 rounded-lg">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Otros Bienes (€)</label>
+                            <input type="number" id="bien" value="0" class="w-full border-2 p-2 rounded-lg">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1">Deudas (€)</label>
+                            <input type="number" id="deu" value="0" class="w-full border-2 p-2 rounded-lg">
+                        </div>
+
+                        <button onclick="calcularTodo()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform active:scale-95">
+                            CALCULAR Y GENERAR INFORME
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col h-full">
+                        <div id="area-pdf" class="bg-slate-900 text-green-400 p-6 rounded-xl font-mono text-[11px] shadow-inner flex-grow overflow-auto min-h-[350px]">
+                            <div id="resultado-texto">Esperando ejecución...</div>
+                        </div>
+                        <button id="btn-descarga" onclick="generarPDF()" class="hidden mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2">
+                            <span>📄</span> DESCARGAR PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tablas" class="tab-content">
+                <div class="bg-slate-50 p-6 rounded-xl border">
+                    <h2 class="font-bold text-slate-800 mb-4">Escalas y Tipos Aplicados</h2>
+                    <pre id="info-normativa" class="text-xs text-slate-600 font-mono whitespace-pre-wrap"></pre>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // DATOS FISCALES
+        const ccaa_config = {
+            "Cataluña": [500000, "catalana", 1.0],
+            "Madrid": [700000, "estatal", 0.0],
+            "Andalucía": [700000, "estatal", 0.0],
+            "C. Valenciana": [500000, "estatal", 1.0],
+            "Aragón": [400000, "estatal", 1.0],
+            "Resto España": [700000, "estatal", 1.0]
+        };
+
+        const escalas = {
+            "estatal": [[167129, 0.002], [334252, 0.003], [668499, 0.005], [1336999, 0.009], [2673999, 0.013], [5347998, 0.017], [10695996, 0.021], [Infinity, 0.035]],
+            "catalana": [[167129, 0.0021], [334252, 0.00315], [668499, 0.00525], [1336999, 0.00945], [2673999, 0.01365], [5347998, 0.01785], [10695996, 0.0236], [Infinity, 0.0275]]
+        };
+
+        // FUNCIÓN CAMBIAR PESTAÑAS (CORREGIDA)
+        function changeTab(id) {
+            // Ocultar todos
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('button[id^="btn-"]').forEach(el => el.classList.remove('active-tab'));
+            
+            // Mostrar seleccionado
+            document.getElementById(id).classList.add('active');
+            document.getElementById('btn-' + id).classList.add('active-tab');
+        }
+
+        // FORMATEADORES
+        const f = n => n.toLocaleString('es-ES', { minimumFractionDigits: 2 }) + " €";
+        const p = n => (n * 100).toFixed(3).replace('.', ',') + " %";
+
+        function calcularCuota(base, tipo) {
+            if (base <= 0) return 0;
+            let cuota = 0, restante = base, anterior = 0;
+            for (let [limite, tasa] of escalas[tipo]) {
+                let tramo = Math.min(restante, limite - anterior);
+                cuota += tramo * tasa;
+                restante -= tramo;
+                anterior = limite;
+                if (restante <= 0) break;
+            }
+            return cuota;
+        }
+
+        // BOTÓN CALCULAR (CORREGIDO)
+        function calcularTodo() {
+            try {
+                const v = parseFloat(document.getElementById('viv').value) || 0;
+                const b = parseFloat(document.getElementById('bien').value) || 0;
+                const d = parseFloat(document.getElementById('deu').value) || 0;
+                const ccaaSel = document.getElementById('ccaa').value;
+
+                // Lógica vivienda habitual
+                const pNeto = Math.max(0, (v - Math.min(v, 300000)) + b - d);
+                const [minEx, escTipo, bonif] = ccaa_config[ccaaSel];
+                const baseL = Math.max(0, pNeto - minEx);
+                const cuotaSel = calcularCuota(baseL, escTipo) * bonif;
+
+                let res = `BORRADOR FISCAL 2026 - ${ccaaSel.toUpperCase()}\n`;
+                res += "=".repeat(40) + "\n";
+                res += `Patrimonio Neto:      ${f(pNeto).padStart(15)}\n`;
+                res += `Mínimo Exento:        ${f(minEx).padStart(15)}\n`;
+                res += `Base Liquidable:      ${f(baseL).padStart(15)}\n`;
+                res += `CUOTA TOTAL:          ${f(cuotaSel).padStart(15)}\n`;
+                res += "=".repeat(40) + "\n\n";
+                res += `ESTUDIO POR COMUNIDADES:\n`;
+                res += `${'CCAA'.padEnd(12)} | ${'CUOTA'.padStart(12)} | ${'AHORRO'.padStart(10)}\n`;
+                res += "-".repeat(40) + "\n";
+
+                for (let [nombre, [mEx, esc, bMult]] of Object.entries(ccaa_config)) {
+                    let c = calcularCuota(Math.max(0, pNeto - mEx), esc) * bMult;
+                    let ahorro = Math.max(0, cuotaSel - c);
+                    res += `${nombre.substring(0,11).padEnd(12)} | ${f(c).padStart(12)} | ${f(ahorro).padStart(10)}\n`;
+                }
+
+                document.getElementById('resultado-texto').innerText = res;
+                document.getElementById('btn-descarga').classList.remove('hidden');
+            } catch (e) {
+                alert("Error en el cálculo: " + e);
+            }
+        }
+
+        function generarPDF() {
+            const element = document.getElementById('area-pdf');
+            html2pdf().from(element).save('Informe_Patrimonio_2026.pdf');
+        }
+
+        // Llenar normativa al cargar
+        let norm = "";
+        for (let [nombre, escala] of Object.entries(escalas)) {
+            norm += `>> ESCALA ${nombre.toUpperCase()}:\n`;
+            escala.forEach(([lim, tasa]) => {
+                norm += `Hasta ${lim === Infinity ? 'el resto' : f(lim)} -> ${(tasa*100).toFixed(2)}%\n`;
+            });
+            norm += "\n";
+        }
+        document.getElementById('info-normativa').innerText = norm;
+    </script>
+</body>
+</html>
