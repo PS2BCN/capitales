@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Game Boy Adivinanza</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body { 
+            background-color: #333; 
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: screen;
+            margin: 0;
+        }
+
+        /* Carcasa de la Game Boy */
+        .gameboy {
+            background-color: #999;
+            width: 320px;
+            height: 520px;
+            border-radius: 10px 10px 60px 10px;
+            padding: 20px;
+            box-shadow: inset -10px -10px 0px rgba(0,0,0,0.2), 10px 10px 20px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        /* Marco de la pantalla */
+        .screen-frame {
+            background-color: #444;
+            width: 100%;
+            height: 240px;
+            border-radius: 10px 10px 40px 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        /* Pantalla LCD (Verde oliva clásico) */
+        .lcd {
+            background-color: #9bbc0f;
+            width: 100%;
+            height: 100%;
+            border: 4px solid #8b9506;
+            color: #0f380f;
+            padding: 10px;
+            font-size: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Botones */
+        .d-pad {
+            width: 80px;
+            height: 80px;
+            position: relative;
+        }
+        .btn-a, .btn-b {
+            width: 45px;
+            height: 45px;
+            background-color: #a9185c;
+            border-radius: 50%;
+            box-shadow: 2px 2px 0px #70103d;
+        }
+
+        .input-gameboy {
+            background-color: #8b9506;
+            border: none;
+            border-bottom: 2px solid #0f380f;
+            width: 60px;
+            color: #0f380f;
+            text-align: center;
+            outline: none;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        #historial { height: 50px; overflow-y: auto; margin-top: 5px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+    <div class="gameboy mt-10">
+        <div class="screen-frame">
+            <div class="lcd">
+                <div class="flex justify-between mb-2">
+                    <span id="pista-audio">OFF</span>
+                    <span id="lbl-intentos">I:0</span>
+                </div>
+
+                <div class="text-center mb-2" style="font-size: 10px;">ADIVINA 1-1000</div>
+                
+                <div id="historial">-- SISTEMA --</div>
+
+                <div class="flex-1 flex flex-col items-center justify-center">
+                    <p id="pista" class="mb-2 text-center">ESPERANDO...</p>
+                    <input type="number" id="inputNum" class="input-gameboy" placeholder="000">
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center px-2">
+            <div class="d-pad">
+                <div class="absolute top-1/2 left-0
