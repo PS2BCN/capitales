@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Desafío Extremo: 90 Fronteras</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #e67e22; --bg: #ecf0f1; --danger: #e74c3c; --success: #27ae60; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); display: flex; flex-direction: column; align-items: center; margin: 0; min-height: 100vh; }
+        
+        .game-container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 600px; text-align: center; margin-top: 20px; }
+        
+        .stats-bar { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 1.1rem; }
+        
+        .lives { color: var(--danger); font-size: 1.4rem; }
+        
+        .progress-container { width: 100%; background: #ddd; border-radius: 10px; height: 20px; margin-bottom: 20px; overflow: hidden; }
+        #progress-bar { width: 0%; height: 100%; background: var(--success); transition: width 0.4s; }
+
+        .question-box { background: #f9f9f9; padding: 20px; border-radius: 10px; border: 2px solid var(--primary); margin-bottom: 20px; }
+        
+        input[type="text"] { 
+            width: 80%; padding: 12px; font-size: 1.1rem; border: 2px solid #ccc; border-radius: 8px; outline: none; text-align: center; text-transform: capitalize;
+        }
+        
+        input[type="text"]:focus { border-color: var(--accent); }
+
+        .btn-check { 
+            margin-top: 15px; padding: 12px 30px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;
+        }
+
+        .info-extra { font-size: 0.8rem; color: #7f8c8d; margin-top: 10px; }
+
+        /* Reproductor */
+        .player { margin-top: 20px; background: var(--primary); color: white; padding: 15px; border-radius: 10px; width: 320px; text-align: center; }
+        .btn-music { background: none; border: 1px solid white; color: white; cursor: pointer; padding: 5px 10px; margin: 0 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="stats-bar">
+            <div>Puntos: <span id="score">0</span>/1000</div>
+            <div class="lives" id="lives-display">❤️❤️❤️❤️❤️</div>
+        </div>
+
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+
+        <div class="question-box">
+            <p>¿Qué país tiene estas fronteras?</p>
+            <h3 id="border-list">Cargando...</h3>
+        </div>
+
+        <input type="text" id="user-answer" placeholder="Escribe el país aquí..." autocomplete="off">
+        <br>
+        <button class="btn-check" onclick="processAnswer()">COMPROBAR</button>
+        
+        <div class="info-extra">
+            Aciertos seguidos: <span id="streak">0</span> | Recuperas 0.5 vida cada 15 aciertos.
+        </div>
+    </div>
+
+    <div class="player">
+        <div id="song-name" style="font-size: 11px; margin-bottom: 5px;">Música de fondo</div>
+        <button class="btn-music" onclick="prevSong()">⏮</button>
+        <button class="btn-music" id="play-pause" onclick="togglePlay()">▶</button>
+        <button class="btn-music" onclick="nextSong()">⏭</button>
+        <audio id="audio-player"></audio>
+    </div>
+
+    <script>
+        const paises = [
+            { n: "España", f: "Francia, Portugal, Andorra, Marruecos" },
+            { n: "Argentina", f: "Chile, Bolivia, Paraguay, Brasil, Uruguay" },
+            { n: "Francia", f: "España, Bélgica, Alemania, Italia, Suiza, Luxemburgo, Mónaco" },
+            { n: "Mexico", f: "EE.UU., Guatemala, Belice" },
+            { n: "Brasil", f: "Argentina, Bolivia, Colombia, Guayana Francesa, Guyana, Paraguay, Perú, Surinam, Uruguay, Venezuela" },
+            { n: "Italia", f: "Francia, Suiza, Austria, Eslovenia, San Marino, Ciudad del Vaticano" },
+            { n: "Alemania", f: "Dinamarca, Polonia, Rep. Checa, Austria, Suiza, Francia, Luxemburgo, Bélgica, Países Bajos" },
+            { n: "Canada", f: "EE.UU. (Alaska y frontera sur)" },
+            { n: "Portugal", f: "España" },
+            { n: "Chile", f: "Perú, Bolivia, Argentina" },
+            { n: "Egipto", f: "Libia, Sudán, Israel" },
+            { n: "China", f: "Rusia, India, Kazajistán, Mongolia, Pakistán, Nepal, Vietnam, entre otros" },
+            { n: "Rusia", f: "Noruega, Finlandia, Estonia, Letonia, Lituania, Polonia, Bielorrusia, Ucrania, Georgia, Azerbaiyán, Kazajistán, China, Mongolia, Corea del Norte" },
+            { n: "India", f: "Pakistán, China, Nepal, Bután, Bangladesh, Myanmar" },
+            { n: "Colombia", f: "Panamá, Venezuela, Brasil, Perú, Ecuador" },
+            { n: "Peru", f: "Ecuador, Colombia, Brasil, Bolivia, Chile" },
+            { n: "Venezuela", f: "Colombia, Brasil, Guyana" },
+            { n: "Bolivia", f: "Brasil, Paraguay, Argentina, Chile, Perú" },
+            { n: "Paraguay", f: "Argentina, Brasil, Bolivia" },
+            { n: "Uruguay", f: "Brasil, Argentina" },
+            { n: "Ecuador", f: "Colombia, Perú" },
+            { n: "Panama", f: "Costa Rica, Colombia" },
+            { n: "Costa Rica", f: "Nicaragua, Panamá" },
+            { n: "Nicaragua", f: "Honduras, Costa Rica" },
+            { n: "Honduras", f: "Guatemala, El Salvador, Nicaragua" },
+            { n: "El Salvador", f: "Guatemala, Honduras" },
+            { n: "Guatemala", f: "México, Belice, Honduras, El Salvador" },
+            { n: "Belice", f: "México, Guatemala" },
+            { n: "Estados Unidos", f: "Canadá, México" },
+            { n: "Sudafrica", f: "Namibia, Botsuana, Zimbabue, Mozambique, Suazilandia, Lesoto" },
+            { n: "Marruecos", f: "España, Argelia, Sáhara Occidental" },
+            { n: "Argelia", f: "Túnez, Libia, Níger, Malí, Mauritania, Marruecos" },
+            { n: "Libia", f: "Egipto, Sudán, Chad, Níger, Argelia, Túnez" },
+            { n: "Nigeria", f: "Benín, Níger, Chad, Camerún" },
+            { n: "Kenia", f: "Etiopía, Somalia, Tanzania, Uganda, Sudán del Sur" },
+            { n: "Turquia", f: "Grecia, Bulgaria, Georgia, Armenia, Azerbaiyán, Irán, Irak, Siria" },
+            { n: "Iran", f: "Irak, Turquía, Armenia, Azerbaiyán, Turkmenistán, Afganistán, Pakistán" },
+            { n: "Arabia Saudita", f: "Jordania, Irak, Kuwait, Catar, EAU, Omán, Yemen" },
+            { n: "Israel", f: "Líbano, Siria, Jordania, Egipto" },
+            { n: "Grecia", f: "Albania, Macedonia del Norte, Bulgaria, Turquía" },
+            { n: "Suiza", f: "Alemania, Francia, Italia, Austria, Liechtenstein" },
+            { n: "Austria", f: "Alemania, Chequia, Eslovaquia, Hungría, Eslovenia, Italia, Suiza" },
+            { n: "Belgica", f: "Países Bajos, Alemania, Luxemburgo, Francia" },
+            { n: "Paises Bajos", f: "Bélgica, Alemania" },
+            { n: "Polonia", f: "Alemania, Chequia, Eslovaquia, Ucrania, Bielorrusia, Lituania, Rusia" },
+            { n: "Suecia", f: "Noruega, Finlandia" },
+            { n: "Noruega", f: "Suecia, Finlandia, Rusia" },
+            { n: "Finlandia", f: "Suecia, Noruega, Rusia" },
+            { n: "Ucrania", f: "Bielorrusia, Rusia, Moldavia, Rumanía, Hungría, Eslovaquia, Polonia" },
+            { n: "Rumania", f: "Hungría, Serbia, Bulgaria, Moldavia, Ucrania" },
+            { n: "Tailandia", f: "Myanmar, Laos, Camboya, Malasia" },
+            { n: "Vietnam", f: "China, Laos, Camboya" },
+            { n: "Corea del Sur", f: "Corea del Norte" },
+            { n: "Indonesia", f: "Malasia, Timor Oriental, Papúa Nueva Guinea" },
+            { n: "Irlanda", f: "Reino Unido" },
+            { n: "Afganistan", f: "Irán, Turkmenistán, Uzbekistán, Tayikistán, China, Pakistán" },
+            { n: "Kazajistan", f: "Rusia, China, Kirguistán, Uzbekistán, Turkmenistán" },
+            { n: "Mongolia", f: "Rusia, China" },
+            { n: "Nepal", f: "China, India" },
+            { n: "Andorra", f: "España, Francia" },
+            { n: "Luxemburgo", f: "Bélgica, Alemania, Francia" },
+            { n: "Malasia", f: "Tailandia, Indonesia, Brunéi" },
+            { n: "Croacia", f: "Eslovenia, Hungría, Serbia, Bosnia, Montenegro" },
+            { n: "Serbia", f: "Hungría, Rumanía, Bulgaria, Macedonia, Montenegro, Bosnia, Croacia" }
+            // ... Puedes seguir añadiendo hasta los 90 países
+        ];
+
+        let score = 0;
+        let lives = 5;
+        let currentCountry = {};
+        let streak = 0;
+
+        function updateUI() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('progress-bar').style.width = (score / 1000 * 100) + "%";
+            document.getElementById('streak').innerText = streak;
+            
+            // Dibujar corazones (permitiendo medios corazones visualmente o simplemente el número)
+            let heartString = "";
+            for(let i=0; i < Math.floor(lives); i++) heartString += "❤️";
+            if(lives % 1 !== 0) heartString += "💔"; 
+            document.getElementById('lives-display').innerText = heartString || "💀";
+        }
+
+        function loadQuestion() {
+            if(score >= 1000) {
+                alert("¡FELICIDADES! HAS GANADO EL JUEGO.");
+                location.reload();
+                return;
+            }
+            currentCountry = paises[Math.floor(Math.random() * paises.length)];
+            document.getElementById('border-list').innerText = currentCountry.f;
+            document.getElementById('user-answer').value = "";
+            document.getElementById('user-answer').focus();
+        }
+
+        function processAnswer() {
+            let userVal = document.getElementById('user-answer').value.trim().toLowerCase();
+            let correctVal = currentCountry.n.toLowerCase();
+
+            // Quitar tildes para facilitar
+            userVal = userVal.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            correctVal = correctVal.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+            if(userVal === correctVal) {
+                score += 25;
+                streak++;
+                
+                // Cada 15 aciertos recupera media vida (0.5)
+                if(streak % 15 === 0) {
+                    if(lives < 5) lives += 0.5;
+                    alert("¡Gran racha! Recuperas 0.5 vidas.");
+                }
+            } else {
+                lives -= 1;
+                streak = 0;
+                alert("Incorrecto. Era: " + currentCountry.n);
+                
+                if(lives <= 0) {
+                    alert("GAME OVER. Puntuación final: " + score);
+                    location.reload();
+                    return;
+                }
+            }
+            updateUI();
+            loadQuestion();
+        }
+
+        // Permitir Enter
+        document.getElementById('user-answer').addEventListener("keyup", function(event) {
+            if (event.key === "Enter") processAnswer();
+        });
+
+        // MÚSICA
+        const audio = document.getElementById('audio-player');
+        const songs = ['musica_fondo.mp3', 'musica_fondo1.mp3', 'musica_fondo2.mp3', 'musica_fondo3.mp3', 'musica_fondo4.mp3', 'musica_fondo5.mp3', 'musica_fondo6.mp3'];
+        let songIdx = 0;
+        function loadSong(i) { audio.src = songs[i]; document.getElementById('song-name').innerText = songs[i]; }
+        function togglePlay() { 
+            if(audio.paused) { audio.play(); document.getElementById('play-pause').innerText = "⏸"; }
+            else { audio.pause(); document.getElementById('play-pause').innerText = "▶"; }
+        }
+        function nextSong() { songIdx = (songIdx + 1) % songs.length; loadSong(songIdx); audio.play(); }
+        function prevSong() { songIdx = (songIdx - 1 + songs.length) % songs.length; loadSong(songIdx); audio.play(); }
+
+        loadSong(0);
+        updateUI();
+        loadQuestion();
+    </script>
+</body>
+</html>
