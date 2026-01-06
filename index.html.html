@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Juego de Países Colindantes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #111;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .game {
+            background: #222;
+            padding: 25px;
+            border-radius: 10px;
+            width: 350px;
+            text-align: center;
+        }
+
+        input {
+            width: 90%;
+            padding: 8px;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 8px 15px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .correct {
+            color: lime;
+        }
+
+        .wrong {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game">
+    <h2>🌍 País actual:</h2>
+    <h1 id="country"></h1>
+
+    <p>Escribe un país que haga frontera:</p>
+    <input type="text" id="answer" placeholder="Ej: Francia">
+    <br>
+    <button onclick="checkAnswer()">Comprobar</button>
+    <button onclick="nextCountry()">Siguiente</button>
+
+    <p id="message"></p>
+    <p>⭐ Puntuación: <span id="score">0</span></p>
+</div>
+
+<script>
+    // BASE DE DATOS DE PAÍSES Y FRONTERAS
+    const borders = {
+        "España": ["Francia", "Portugal", "Andorra", "Marruecos"],
+        "Francia": ["España", "Bélgica", "Alemania", "Italia", "Suiza", "Luxemburgo"],
+        "Alemania": ["Francia", "Polonia", "Suiza", "Austria", "Bélgica", "Países Bajos"],
+        "Brasil": ["Argentina", "Uruguay", "Paraguay", "Bolivia", "Perú", "Colombia", "Venezuela"],
+        "Argentina": ["Chile", "Uruguay", "Brasil", "Bolivia", "Paraguay"],
+        "México": ["Estados Unidos", "Guatemala", "Belice"],
+        "China": ["India", "Rusia", "Mongolia", "Pakistán", "Nepal"],
+        "Italia": ["Francia", "Suiza", "Austria", "Eslovenia"],
+        "Portugal": ["España"]
+    };
+
+    const countries = Object.keys(borders);
+    let currentCountry = "";
+    let score = 0;
+
+    function randomCountry() {
+        return countries[Math.floor(Math.random() * countries.length)];
+    }
+
+    function nextCountry() {
+        currentCountry = randomCountry();
+        document.getElementById("country").textContent = currentCountry;
+        document.getElementById("message").textContent = "";
+        document.getElementById("answer").value = "";
+    }
+
+    function checkAnswer() {
+        const userAnswer = document.getElementById("answer").value.trim();
+        const validBorders = borders[currentCountry];
+
+        if (validBorders.map(p => p.toLowerCase()).includes(userAnswer.toLowerCase())) {
+            score++;
+            document.getElementById("message").textContent = "✅ Correcto";
+            document.getElementById("message").className = "correct";
+            document.getElementById("score").textContent = score;
+        } else {
+            document.getElementById("message").textContent =
+                "❌ Incorrecto. Ejemplos: " + validBorders.join(", ");
+            document.getElementById("message").className = "wrong";
+        }
+    }
+
+    // Iniciar juego
+    nextCountry();
+</script>
+
+</body>
+</html>
