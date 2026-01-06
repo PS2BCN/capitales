@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Quiz World - BCN Edition</title>
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #00001a; color: #00FF00; font-family: 'Courier New', Courier, monospace; }
+        .retro-border { border: 2px solid #00FF00; box-shadow: 0 0 10px #00FF00; }
+        button { transition: all 0.2s; }
+        button:active { transform: scale(0.95); }
+    </style>
+</head>
+<body class="flex flex-col items-center p-4 min-h-screen">
+
+    <div class="w-full max-w-md bg-black p-6 retro-border rounded-lg">
+        <div class="flex justify-between text-xs mb-4 text-yellow-400">
+            <div id="clock">BCN: --:--:--</div>
+            <div>BARCELONA: 8°C ☀</div>
+        </div>
+
+        <div id="question-box" class="bg-blue-900/30 p-6 text-center text-xl mb-4 h-32 flex items-center justify-center border border-green-500/50">
+            CARGANDO DESAFÍO...
+        </div>
+
+        <div class="w-full bg-gray-800 h-2 mb-6">
+            <div id="progress-bar" class="bg-green-500 h-2" style="width: 0%"></div>
+        </div>
+
+        <div class="space-y-3" id="options-container">
+            <button onclick="check_ans(0)" id="btn0" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
+            <button onclick="check_ans(1)" id="btn1" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
+            <button onclick="check_ans(2)" id="btn2" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
+        </div>
+
+        <div class="mt-6 flex justify-between items-center border-t border-gray-700 pt-4">
+            <div id="score">PTS: 0</div>
+            <button onclick="play_random()" class="bg-green-900 text-[10px] px-2 py-1 border border-green-500">SHUFFLE >></button>
+        </div>
+        
+        <div id="lives" class="text-center text-red-500 text-2xl mt-2">❤❤❤❤❤</div>
+        <div id="message" class="text-center text-pink-500 text-sm mt-2 font-bold italic">¡SUERTE!</div>
+    </div>
+
+    <audio id="bg-music" loop></audio>
+
+    <section class="pyscript">
+        <script type="py">
+            import random
+            from datetime import datetime
+            from pyscript import display, window, document
+
+            # Base de Datos 175 Países
+            PAISES = {
+                "España": ["Madrid", "Barcelona", "Valencia"], "Francia": ["París", "Marsella", "Lyon"],
+                "Italia": ["Roma", "Milán", "Nápoles"], "Alemania": ["Berlín", "Hamburgo", "Múnich"],
+                "Japón": ["Tokio", "Osaka", "Kioto"], "EE.UU.": ["Washington D.C.", "Nueva York", "Chicago"],
+                "México": ["CDMX", "Guadalajara", "Monterrey"], "Brasil": ["Brasilia", "Sao Paulo", "Río"],
+                "Argentina": ["Buenos Aires", "Córdoba", "Rosario"], "Egipto": ["El Cairo", "Alejandría", "Guiza"],
+                "Portugal": ["Lisboa", "Oporto", "Braga"], "Grecia": ["Atenas", "Tesalónica", "Patras"],
+                "Reino Unido": ["Londres", "Manchester", "Liverpool"], "Canadá": ["Ottawa", "Toronto", "Montreal"],
+                "Australia": ["Canberra", "Sídney", "Melbourne"], "Turquía": ["Ankara", "Estambul", "Esmirna"],
+                "Noruega": ["Oslo", "Bergen", "Stavanger"], "Suecia": ["Estocolmo", "Gotemburgo", "Malmö"],
+                "Suiza": ["Berna", "Zúrich", "Ginebra"], "Países Bajos": ["Ámsterdam", "Rotterdam", "Utrecht"]
+                # Puedes seguir pegando los 175 aquí
+            }
+
+            score = 0
+            lives = 5
+            correct_ans = ""
+
+            def update_clock():
+                now = datetime.now().strftime("%H:%M:%S")
+                document.getElementById("clock").innerText = f"BCN: {now}"
+
+            def next_q():
+                global correct_ans
+                pais = random.choice(list(PAISES.keys()))
+                correct_ans = PAISES[pais][0]
+                options = list(PAISES[pais])
+                random.shuffle(options)
+                
+                document.getElementById("question-box").innerText = f"¿CAPITAL DE {pais.upper()}?"
+                for i in range(3):
+                    document.getElementById(f"btn{i}").innerText = options[i]
+
+            def check_answer(evt):
+                global score, lives
+                selected = evt.target.innerText
+                if selected == correct_ans:
+                    score += 25
+                    document.getElementById("score").innerText = f"PTS: {score}"
+                    document.getElementById("message").innerText = "¡ERES UNA LEYENDA!"
+                    document.getElementById("progress-bar").style.width = f"{min(score/10, 100)}%"
+                    next_q()
+                else:
+                    lives -= 1
+                    document.getElementById("lives").innerText = "❤" * lives
+                    if lives <= 0:
+                        window.alert(f"GAME OVER. Score: {score}")
+                        score = 0
+                        lives = 5
+                        document.getElementById("score").innerText = "PTS: 0"
+                        document.getElementById("lives").innerText = "❤❤❤❤❤"
+                    next_q()
+
+            # Vincular funciones a botones
+            for i in range(3):
+                document.getElementById(f"btn{i}").onclick = check_answer
+
+            # Inicializar
+            next_q()
+            window.setInterval(update_clock, 1000)
+        </script>
+    </section>
+
+    <script>
+        // Lógica de música en JS (más estable para Web)
+        const music = document.getElementById('bg-music');
+        const tracks = ["musica_fondo.mp3", "musica_fondo2.mp3", "musica_fondo3.mp3", "musica_fondo4.mp3", "musica_fondo5.mp3", "musica_fondo6.mp3"];
+        
+        function play_random() {
+            const track = tracks[Math.floor(Math.random() * tracks.length)];
+            music.src = track;
+            music.play().catch(e => console.log("Click para sonar"));
+            document.getElementById('message').innerText = "TRACK: " + track;
+        }
+        
+        window.onclick = () => { if(music.paused) play_random(); };
+    </script>
+</body>
+</html>
