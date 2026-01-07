@@ -10,192 +10,139 @@
     <style>
         body { background-color: #00001a; color: #00FF00; font-family: 'Courier New', Courier, monospace; }
         .retro-border { border: 2px solid #00FF00; box-shadow: 0 0 10px #00FF00; }
-        button { transition: all 0.2s; }
-        button:active { transform: scale(0.95); }
+        .flag-shadow { filter: drop-shadow(0 0 5px #00FF00); }
+        #timer-bar { transition: width 1s linear; }
     </style>
 </head>
 <body class="flex flex-col items-center p-4 min-h-screen">
 
     <div class="w-full max-w-md bg-black p-6 retro-border rounded-lg">
-        <div class="flex justify-between text-xs mb-4 text-yellow-400">
+        <div class="flex justify-between text-xs mb-2 text-yellow-400">
             <div id="clock">BCN: --:--:--</div>
-            <div>BARCELONA: 8°C ☀</div>
+            <div id="timer-text" class="text-red-500 font-bold">TIEMPO: 15s</div>
         </div>
 
-        <div id="question-box" class="bg-blue-900/30 p-6 text-center text-xl mb-4 h-32 flex items-center justify-center border border-green-500/50">
-            CARGANDO DESAFÍO...
+        <div class="w-full bg-gray-900 h-1 mb-4">
+            <div id="timer-bar" class="bg-red-600 h-1" style="width: 100%"></div>
         </div>
 
-        <div class="w-full bg-gray-800 h-2 mb-6">
-            <div id="progress-bar" class="bg-green-500 h-2" style="width: 0%"></div>
+        <div class="flex justify-center mb-4">
+            <img id="country-flag" src="" class="h-16 flag-shadow hidden border border-green-500">
+        </div>
+
+        <div id="question-box" class="bg-blue-900/30 p-6 text-center text-xl mb-4 h-24 flex items-center justify-center border border-green-500/50">
+            CARGANDO...
         </div>
 
         <div class="space-y-3" id="options-container">
-            <button onclick="check_ans(0)" id="btn0" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
-            <button onclick="check_ans(1)" id="btn1" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
-            <button onclick="check_ans(2)" id="btn2" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
+            <button id="btn0" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
+            <button id="btn1" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
+            <button id="btn2" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
         </div>
 
         <div class="mt-6 flex justify-between items-center border-t border-gray-700 pt-4">
             <div id="score">PTS: 0</div>
-            <button onclick="play_random()" class="bg-green-900 text-[10px] px-2 py-1 border border-green-500">SHUFFLE >></button>
+            <div id="lives" class="text-red-500 text-xl">❤❤❤❤❤</div>
         </div>
         
-        <div id="lives" class="text-center text-red-500 text-2xl mt-2">❤❤❤❤❤</div>
-        <div id="message" class="text-center text-pink-500 text-sm mt-2 font-bold italic">¡SUERTE!</div>
+        <div id="message" class="text-center text-pink-500 text-sm mt-2 font-bold italic">¡RÁPIDO!</div>
     </div>
-
-    <audio id="bg-music" loop></audio>
 
     <section class="pyscript">
         <script type="py">
             import random
             from datetime import datetime
-            from pyscript import display, window, document
+            from pyscript import window, document
 
-            # Base de Datos 175 Países
             PAISES = {
-              "España": ["Madrid", "Barcelona", "Valencia"], "Francia": ["París", "Marsella", "Lyon"],
-    "Italia": ["Roma", "Milán", "Nápoles"], "Alemania": ["Berlín", "Hamburgo", "Múnich"],
-    "Reino Unido": ["Londres", "Manchester", "Birmingham"], "Portugal": ["Lisboa", "Oporto", "Braga"],
-    "Grecia": ["Atenas", "Tesalónica", "Patras"], "Países Bajos": ["Ámsterdam", "Rotterdam", "Utrecht"],
-    "Bélgica": ["Bruselas", "Amberes", "Gante"], "Suiza": ["Berna", "Zúrich", "Ginebra"],
-    "Austria": ["Viena", "Salzburgo", "Innsbruck"], "Suecia": ["Estocolmo", "Gotemburgo", "Malmö"],
-    "Noruega": ["Oslo", "Bergen", "Stavanger"], "Dinamarca": ["Copenhague", "Aarhus", "Odense"],
-    "Finlandia": ["Helsinki", "Espoo", "Tampere"], "Irlanda": ["Dublín", "Cork", "Galway"],
-    "Polonia": ["Varsovia", "Cracovia", "Lodz"], "Rumanía": ["Bucarest", "Cluj-Napoca", "Timisoara"],
-    "Hungría": ["Budapest", "Debrecen", "Szeged"], "República Checa": ["Praga", "Brno", "Ostrava"],
-    "Bulgaria": ["Sofía", "Plovdiv", "Varna"], "Croacia": ["Zagreb", "Split", "Rijeka"],
-    "Serbia": ["Belgrado", "Novi Sad", "Niš"], "Eslovaquia": ["Bratislava", "Kosice", "Presov"],
-    "Eslovenia": ["Liubliana", "Maribor", "Celje"], "Estonia": ["Tallin", "Tartu", "Narva"],
-    "Letonia": ["Riga", "Daugavpils", "Liepaja"], "Lituania": ["Vilna", "Kaunas", "Klaipeda"],
-    "Luxemburgo": ["Luxemburgo", "Esch-sur-Alzette", "Differdange"], "Malta": ["La Valeta", "Birkirkara", "Mosta"],
-    "Mónaco": ["Mónaco", "Montecarlo", "La Condamine"], "Islandia": ["Reikiavik", "Kópavogur", "Hafnarfjörður"],
-    "Albania": ["Tirana", "Durrës", "Vlorë"], "Andorra": ["Andorra la Vella", "Escaldes-Engordany", "Encamp"],
-    "Bielorrusia": ["Minsk", "Gómel", "Mogilev"], "Bosnia y Herzegovina": ["Sarajevo", "Bania Luka", "Tuzla"],
-    "Chipre": ["Nicosia", "Limassol", "Lárnaca"], "Georgia": ["Tiflis", "Batumi", "Kutaisi"],
-    "Moldavia": ["Chisináu", "Tiráspol", "Bălți"], "Montenegro": ["Podgorica", "Nikšić", "Pljevlja"],
-    "Macedonia del Norte": ["Skopie", "Bitola", "Kumanovo"], "San Marino": ["San Marino", "Dogana", "Borgo Maggiore"],
-    "Ucrania": ["Kiev", "Járkov", "Odesa"], "Vaticano": ["Ciudad del Vaticano", "San Pedro", "Museos"],
-    "Kosovo": ["Pristina", "Prizren", "Peja"],
-    "Estados Unidos": ["Washington D.C.", "Nueva York", "Los Ángeles"], "Canadá": ["Ottawa", "Toronto", "Vancouver"],
-    "México": ["Ciudad de México", "Guadalajara", "Monterrey"], "Brasil": ["Brasilia", "São Paulo", "Río de Janeiro"],
-    "Argentina": ["Buenos Aires", "Córdoba", "Rosario"], "Chile": ["Santiago", "Valparaíso", "Concepción"],
-    "Colombia": ["Bogotá", "Medellín", "Cali"], "Perú": ["Lima", "Arequipa", "Trujillo"],
-    "Ecuador": ["Quito", "Guayaquil", "Cuenca"], "Venezuela": ["Caracas", "Maracaibo", "Valencia"],
-    "Uruguay": ["Montevideo", "Salto", "Paysandú"], "Paraguay": ["Asunción", "Ciudad del Este", "Encarnación"],
-    "Bolivia": ["Sucre", "La Paz", "Santa Cruz"], "Cuba": ["La Habana", "Santiago de Cuba", "Camagüey"],
-    "Panamá": ["Panamá", "Colón", "David"], "Costa Rica": ["San José", "Alajuela", "Cartago"],
-    "Guatemala": ["Guatemala", "Mixco", "Villa Nueva"], "Honduras": ["Tegucigalpa", "San Pedro Sula", "Choloma"],
-    "El Salvador": ["San Salvador", "Santa Ana", "San Miguel"], "Nicaragua": ["Managua", "León", "Masaya"],
-    "República Dominicana": ["Santo Domingo", "Santiago", "La Romana"], "Jamaica": ["Kingston", "Spanish Town", "Montego Bay"],
-    "Bahamas": ["Nasáu", "Freeport", "West End"], "Barbados": ["Bridgetown", "Speightstown", "Oistins"],
-    "Belice": ["Belmopán", "Belice", "San Ignacio"], "Guyana": ["Georgetown", "Linden", "New Amsterdam"],
-    "Surinam": ["Paramaribo", "Lelydorp", "Nieuw Nickerie"], "Trinidad y Tobago": ["Puerto España", "San Fernando", "Chaguanas"],
-    "Haití": ["Puerto Príncipe", "Cabo Haitiano", "Gonaïves"], "San Cristóbal y Nieves": ["Basseterre", "Sandy Point", "Charlestown"],
-    "Santa Lucía": ["Castries", "Vieux Fort", "Soufrière"], "San Vicente y las Granadinas": ["Kingstown", "Georgetown", "Biabou"],
-    "Antigua y Barbuda": ["Saint John", "All Saints", "Liberta"], "Dominica": ["Roseau", "Portsmouth", "Marigot"],
-    "Granada": ["Saint George", "Gouyave", "Grenville"],
-    "Japón": ["Tokio", "Osaka", "Kioto"], "China": ["Pekín", "Shanghái", "Cantón"],
-    "India": ["Nueva Delhi", "Bombay", "Calcuta"], "Corea del Sur": ["Seúl", "Busán", "Incheon"],
-    "Tailandia": ["Bangkok", "Phuket", "Chiang Mai"], "Vietnam": ["Hanói", "Ciudad Ho Chi Minh", "Da Nang"],
-    "Indonesia": ["Yakarta", "Surabaya", "Bandung"], "Filipinas": ["Manila", "Quezon", "Dávao"],
-    "Malasia": ["Kuala Lumpur", "George Town", "Ipoh"], "Singapur": ["Singapur", "Jurong", "Changi"],
-    "Israel": ["Jerusalén", "Tel Aviv", "Haifa"], "Turquía": ["Ankara", "Estambul", "Esmirna"],
-    "Arabia Saudita": ["Riad", "Yeda", "La Meca"], "Irán": ["Teherán", "Mashhad", "Isfahán"],
-    "Irak": ["Bagdad", "Basora", "Mosul"], "Pakistán": ["Islamabad", "Karachi", "Lahore"],
-    "Afganistán": ["Kabul", "Herat", "Kandahar"], "Armenia": ["Ereván", "Gyumri", "Vanadzor"],
-    "Azerbaiyán": ["Bakú", "Ganja", "Sumqayit"], "Baréin": ["Manama", "Riffa", "Muharraq"],
-    "Bangladés": ["Daca", "Chittagong", "Khulna"], "Bután": ["Timbu", "Phuntsholing", "Punakha"],
-    "Brunéi": ["Bandar Seri Begawan", "Kuala Belait", "Seria"], "Camboya": ["Phnom Penh", "Battambang", "Siem Reap"],
-    "Corea del Norte": ["Pionyang", "Hamhung", "Chongjin"], "Emiratos Árabes Unidos": ["Abu Dabi", "Dubái", "Sharjah"],
-    "Jordania": ["Amán", "Zarqa", "Irbid"], "Kazajistán": ["Astaná", "Almaty", "Shymkent"],
-    "Kirguistán": ["Biskek", "Osh", "Jalal-Abad"], "Kuwait": ["Kuwait", "Al Ahmadi", "Hawalli"],
-    "Laos": ["Vientián", "Pakse", "Savannakhet"], "Líbano": ["Beirut", "Trípoli", "Sidón"],
-    "Maldivas": ["Malé", "Addu City", "Fuvahmulah"], "Mongolia": ["Ulán Bator", "Erdenet", "Darkhan"],
-    "Birmania": ["Naipyidó", "Rangún", "Mandalay"], "Nepal": ["Katmandú", "Pokhara", "Lalitpur"],
-    "Omán": ["Mascate", "Salalah", "Seeb"], "Catar": ["Doha", "Al Rayyan", "Al Wakrah"],
-    "Sri Lanka": ["Sri Jayawardenepura Kotte", "Colombo", "Kandy"], "Siria": ["Damasco", "Alepo", "Homs"],
-    "Egipto": ["El Cairo", "Alejandría", "Giza"], "Sudáfrica": ["Pretoria", "Ciudad del Cabo", "Durban"],
-    "Marruecos": ["Rabat", "Casablanca", "Marrakech"], "Nigeria": ["Abuya", "Lagos", "Kano"],
-    "Kenia": ["Nairobi", "Mombasa", "Kisumu"], "Australia": ["Canberra", "Sídney", "Melbourne"],
-    "Nueva Zelanda": ["Wellington", "Auckland", "Christchurch"], "Argelia": ["Argel", "Orán", "Constantina"],
-    "Angola": ["Luanda", "Huambo", "Lobito"], "Camerún": ["Yaundé", "Duala", "Garua"],
-    "Costa de Marfil": ["Yamusukro", "Abiyán", "Bouake"], "Etiopía": ["Adís Abeba", "Dire Dawa", "Mekele"],
-    "Ghana": ["Acra", "Kumasi", "Tamale"], "Libia": ["Trípoli", "Bengasi", "Misrata"],
-    "Madagascar": ["Antananarivo", "Toamasina", "Antsirabe"], "Mali": ["Bamako", "Sikasso", "Mopti"],
-    "Namibia": ["Windhoek", "Walvis Bay", "Swakopmund"], "Senegal": ["Dakar", "Touba", "Thiès"],
-    "Túnez": ["Túnez", "Sfax", "Susa"], "Uganda": ["Kampala", "Gulu", "Lira"],
-    "Fiyi": ["Suva", "Lautoka", "Nadi"], "Samoa": ["Apia", "Vaitele", "Faleasiu"],
-    "Tonga": ["Nuku'alofa", "Neiafu", "Mu'a"], "Vanuatu": ["Port Vila", "Luganville", "Isangel"],
-    "Zimbabue": ["Harare", "Bulawayo", "Chitungwiza"], "Tanzania": ["Dodoma", "Dar es Salaam", "Mwanza"],
-    "Sudán": ["Jartum", "Omdurmán", "Puerto Sudán"], "Ruanda": ["Kigali", "Butare", "Gisenyi"],
-    "Mozambique": ["Maputo", "Matola", "Beira"], "Zambia": ["Lusaka", "Kitwe", "Ndola"]
-                # Puedes seguir pegando los 175 aquí
+                "España": ["Madrid", "Barcelona", "Valencia", "es"],
+                "Francia": ["París", "Marsella", "Lyon", "fr"],
+                "Italia": ["Roma", "Milán", "Nápoles", "it"],
+                "Alemania": ["Berlín", "Hamburgo", "Múnich", "de"],
+                "Reino Unido": ["Londres", "Manchester", "Birmingham", "gb"],
+                "Japón": ["Tokio", "Osaka", "Kioto", "jp"],
+                "México": ["Ciudad de México", "Guadalajara", "Monterrey", "mx"],
+                "Brasil": ["Brasilia", "São Paulo", "Río de Janeiro", "br"]
             }
 
             score = 0
             lives = 5
             correct_ans = ""
+            seconds_left = 15
+            timer_id = None
 
             def update_clock():
                 now = datetime.now().strftime("%H:%M:%S")
                 document.getElementById("clock").innerText = f"BCN: {now}"
 
-            def next_q():
-                global correct_ans
-                pais = random.choice(list(PAISES.keys()))
-                correct_ans = PAISES[pais][0]
-                options = list(PAISES[pais])
-                random.shuffle(options)
+            def countdown():
+                global seconds_left, lives, score
+                seconds_left -= 1
                 
-                document.getElementById("question-box").innerText = f"¿CAPITAL DE {pais.upper()}?"
+                # Actualizar UI del timer
+                document.getElementById("timer-text").innerText = f"TIEMPO: {seconds_left}s"
+                document.getElementById("timer-bar").style.width = f"{(seconds_left/15)*100}%"
+
+                if seconds_left <= 0:
+                    window.clearInterval(timer_id)
+                    lives -= 1
+                    document.getElementById("message").innerText = "¡TIEMPO AGOTADO!"
+                    update_lives_ui()
+                    next_q()
+
+            def update_lives_ui():
+                global lives, score
+                document.getElementById("lives").innerText = "❤" * lives
+                if lives <= 0:
+                    window.alert(f"GAME OVER. Puntos: {score}")
+                    score = 0
+                    lives = 5
+                    document.getElementById("score").innerText = "PTS: 0"
+                    update_lives_ui()
+
+            def next_q():
+                global correct_ans, seconds_left, timer_id
+                
+                # Reiniciar Timer
+                if timer_id: window.clearInterval(timer_id)
+                seconds_left = 15
+                document.getElementById("timer-text").innerText = "TIEMPO: 15s"
+                document.getElementById("timer-bar").style.width = "100%"
+                timer_id = window.setInterval(countdown, 1000)
+
+                pais_nom = random.choice(list(PAISES.keys()))
+                datos = PAISES[pais_nom]
+                correct_ans = datos[0]
+                
+                # Imagen y Botones
+                document.getElementById("country-flag").src = f"https://flagcdn.com/w160/{datos[3]}.png"
+                document.getElementById("country-flag").classList.remove("hidden")
+                document.getElementById("question-box").innerText = f"¿CAPITAL DE {pais_nom.upper()}?"
+                
+                options = datos[:3]
+                random.shuffle(options)
                 for i in range(3):
                     document.getElementById(f"btn{i}").innerText = options[i]
 
             def check_answer(evt):
                 global score, lives
-                selected = evt.target.innerText
-                if selected == correct_ans:
+                if evt.target.innerText == correct_ans:
                     score += 25
                     document.getElementById("score").innerText = f"PTS: {score}"
-                    document.getElementById("message").innerText = "¡ERES UNA LEYENDA!"
-                    document.getElementById("progress-bar").style.width = f"{min(score/10, 100)}%"
-                    next_q()
+                    document.getElementById("message").innerText = "¡CORRECTO!"
                 else:
                     lives -= 1
-                    document.getElementById("lives").innerText = "❤" * lives
-                    if lives <= 0:
-                        window.alert(f"GAME OVER. Score: {score}")
-                        score = 0
-                        lives = 5
-                        document.getElementById("score").innerText = "PTS: 0"
-                        document.getElementById("lives").innerText = "❤❤❤❤❤"
-                    next_q()
+                    document.getElementById("message").innerText = "¡FALLASTE!"
+                    update_lives_ui()
+                
+                next_q()
 
-            # Vincular funciones a botones
             for i in range(3):
                 document.getElementById(f"btn{i}").onclick = check_answer
 
-            # Inicializar
-            next_q()
             window.setInterval(update_clock, 1000)
+            next_q()
         </script>
     </section>
-
-    <script>
-        // Lógica de música en JS (más estable para Web)
-        const music = document.getElementById('bg-music');
-        const tracks = ["musica_fondo.mp3", "musica_fondo2.mp3", "musica_fondo3.mp3", "musica_fondo4.mp3", "musica_fondo5.mp3", "musica_fondo6.mp3"];
-        
-        function play_random() {
-            const track = tracks[Math.floor(Math.random() * tracks.length)];
-            music.src = track;
-            music.play().catch(e => console.log("Click para sonar"));
-            document.getElementById('message').innerText = "TRACK: " + track;
-        }
-        
-        window.onclick = () => { if(music.paused) play_random(); };
-    </script>
 </body>
 </html>
