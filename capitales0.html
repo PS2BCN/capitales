@@ -67,7 +67,7 @@
             from pyscript import window, document
 
             # --- CONFIGURACIÓN DE AUDIO LOCAL ---
-            PLAYLIST = ["musica_fondo.mp3", "musica_fondo2.mp3", "musica_fondo3.mp3", 
+            PLAYLIST = ["musica_fondo.mp3",  "musica_fondo1.mp3", "musica_fondo2.mp3", "musica_fondo3.mp3", 
                         "musica_fondo4.mp3", "musica_fondo5.mp3", "musica_fondo6.mp3"]
             
             audio_player = window.Audio.new(PLAYLIST[0])
@@ -185,68 +185,94 @@ PAISES = {
             score, lives, correct_ans, seconds_left, timer_id = 0, 5, "", 15, None
 
             def update_clock():
-                now = datetime.now().strftime("%H:%M:%S")
-                document.getElementById("clock").innerText = f"SYSTEM: {now}"
+                document.getElementById("clock").innerText = f"SYSTEM: {datetime.now().strftime('%H:%M:%S')}"
 
             def countdown():
                 global seconds_left
                 seconds_left -= 1
                 
-                # Actualizar texto y barra (Uso de setProperty para asegurar el cambio)
-                document.getElementById("timer-text").innerText = f"TIME: {seconds_left}S"
+                # Actualizar texto de tiempo
+                document.getElementById("timer-text").innerText = f"REMAINING: {seconds_left}S"
+                
+                # Actualizar BARRA (Lógica corregida)
                 bar = document.getElementById("timer-bar")
-                percentage = (seconds_left / 15) * 100
-                bar.style.width = f"{percentage}%"
+                porcentaje = (seconds_left / 15) * 100
+                bar.style.width = f"{max(0, porcentaje)}%"
 
                 if seconds_left <= 0:
-                    handle_fail("TIMEOUT ERROR")
+                    handle_failure("TIMEOUT")
 
-            def handle_fail(msg):
-                global lives, score, timer_id
+            def handle_failure(reason):
+                global lives, timer_id
                 window.clearInterval(timer_id)
                 lives -= 1
                 document.getElementById("lives").innerText = "❤" * lives
                 if lives <= 0:
-                    window.alert(f"GAME OVER\nSCORE: {score}")
-                    score, lives = 0, 5
-                    document.getElementById("score").innerText = "SCORE: 0000"
-                next_q()
+                    window.alert(f"SISTEMA CRASHED. SCORE FINAL: {score}")
+                    reset_game()
+                else:
+                    next_question()
 
-            def next_q():
+            def reset_game():
+                global score, lives
+                score = 0
+                lives = 5
+                document.getElementById("score").innerText = "SCORE: 0000"
+                document.getElementById("lives").innerText = "❤❤❤❤❤"
+                next_question()
+
+            def next_question():
                 global correct_ans, seconds_left, timer_id
-                if timer_id: window.clearInterval(timer_id)
                 
-                # Reiniciar barra visualmente antes de empezar
+                # 1. Limpiar timer actual
+                if timer_id:
+                    window.clearInterval(timer_id)
+                
+                # 2. Resetear BARRA visualmente antes de la animación
                 seconds_left = 15
-                document.getElementById("timer-bar").style.width = "100%"
-                document.getElementById("timer-text").innerText = "TIME: 15S"
+                bar = document.getElementById("timer-bar")
+                bar.style.transition = "none" # Desactivar transición para salto instantáneo
+                bar.style.width = "100%"
+                document.getElementById("timer-text").innerText = "REMAINING: 15S"
                 
-                timer_id = window.setInterval(countdown, 1000)
+                # Pequeño delay para reactivar la animación suave
+                def start_timer():
+                    bar.style.transition = "width 1s linear"
+                window.setTimeout(start_timer, 50)
 
+                # 3. Nueva pregunta
                 pais = random.choice(list(PAISES.keys()))
                 datos = PAISES[pais]
                 correct_ans = datos[0]
-                
-                document.getElementById("country-flag").src = f"https://flagcdn.com/w160/{datos[4]}.png"
-                document.getElementById("country-flag").classList.remove("hidden")
                 document.getElementById("question-box").innerText = f"> CAPITAL DE {pais.upper()}?"
                 
-                options = [datos[0], datos[1], datos[2], datos[3]]
-                random.shuffle(options)
-                for i in range(4): document.getElementById(f"btn{i}").innerText = options[i]
+                opts = datos[:]
+                random.shuffle(opts)
+                for i in range(4):
+                    btn = document.getElementById(f"btn{i}")
+                    btn.innerText = opts[i]
+                
+                # 4. Lanzar nuevo intervalo
+                timer_id = window.setInterval(countdown, 1000)
 
             def check_answer(evt):
                 global score
+                # SUMAR PUNTOS: Si el texto del botón coincide con la capital
                 if evt.target.innerText == correct_ans:
                     score += 25
+                    # Formatear score con ceros a la izquierda (0025, 0050...)
                     document.getElementById("score").innerText = f"SCORE: {score:04d}"
-                    next_q()
+                    next_question()
                 else:
-                    handle_fail("ACCESS DENIED")
+                    handle_failure("WRONG ACCESS")
 
-            for i in range(4): document.getElementById(f"btn{i}").onclick = check_answer
+            # Vincular clicks
+            for i in range(4):
+                document.getElementById(f"btn{i}").onclick = check_answer
+
+            # Iniciar sistema
             window.setInterval(update_clock, 1000)
-            next_q()
+            next_question()
         </script>
     </section>
 </body>
