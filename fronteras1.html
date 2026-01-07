@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Fronteras Challenge: Map Edition</title>
+    <title>Fronteras Challenge: Map & Region Edition</title>
     <style>
         :root {
             --bg: #0f172a; --card: #1e293b; --accent: #38bdf8;
@@ -21,7 +21,14 @@
         #timer-container { width: 100%; height: 8px; background: #334155; border-radius: 5px; margin-bottom: 15px; overflow: hidden; }
         #timer-bar { width: 100%; height: 100%; background: var(--accent); transition: width 0.1s linear; }
         
-        /* Contenedor del Mapa */
+        /* Etiqueta de Continente */
+        #continent-badge {
+            display: inline-block; background: #334155; color: var(--accent);
+            padding: 4px 12px; border-radius: 20px; font-size: 0.75em;
+            font-weight: bold; text-transform: uppercase; margin-bottom: 5px;
+            border: 1px solid #475569;
+        }
+
         #map-container {
             width: 100%; height: 180px; background: #0f172a; border-radius: 12px; 
             margin-bottom: 15px; overflow: hidden; border: 2px solid #334155;
@@ -30,7 +37,7 @@
         #map-img { width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s; }
 
         .question-text { color: #94a3b8; text-transform: uppercase; font-size: 0.75em; letter-spacing: 1.2px; margin: 0; }
-        h1 { margin: 5px 0 10px 0; font-size: 2.2em; color: var(--accent); }
+        h1 { margin: 2px 0 10px 0; font-size: 2.2em; color: white; }
         
         .options-container { display: flex; flex-direction: column; gap: 10px; }
         .option-btn {
@@ -55,64 +62,62 @@
 <div class="game" id="game-container">
     <div class="stats">
         <span style="color: #fb7185;">❤️ <span id="lives">5</span></span>
-        <span id="bonus-tag" style="color: var(--bonus-gold); display:none;">✨ BONUS ✨</span>
+        <span id="bonus-tag" style="color: var(--bonus-gold); display:none; animation: pulse 1s infinite;">✨ BONUS ✨</span>
         <span style="color: #fbbf24;">💰 <span id="score">0</span></span>
     </div>
     <div id="timer-container"><div id="timer-bar"></div></div>
     
+    <div id="continent-badge">Continente</div>
     <p class="question-text">¿Frontera de...?</p>
     <h1 id="country">Cargando...</h1>
 
     <div id="map-container">
-        <img id="map-img" src="" alt="Mapa del país">
+        <img id="map-img" src="" alt="Mapa">
     </div>
     
     <div class="options-container" id="options"></div>
     <p id="message"></p>
-    <p style="font-size: 0.7em; color: #94a3b8;">Vida extra en: <span id="streak-bar">0</span>/1000 pts</p>
+    <p style="font-size: 0.7em; color: #94a3b8;">Próxima vida extra en: <span id="streak-bar">0</span>/1000 pts</p>
 </div>
 
 <div class="game hidden" id="over-container">
     <h1 style="color: var(--wrong);">¡GAME OVER!</h1>
-    <p style="font-size: 1.5em;">Score: <span id="final-score">0</span></p>
+    <p style="font-size: 1.8em; margin: 10px 0;">Score: <span id="final-score">0</span></p>
+    
     <div id="save-section">
         <input type="text" id="player-name" placeholder="Tu nombre..." maxlength="12">
-        <button class="option-btn" id="btn-save-record" style="background: var(--accent); color: #000; width: 100%;">GUARDAR</button>
+        <button class="option-btn" id="btn-save-record" style="background: var(--accent); color: #000; width: 100%;">GUARDAR RÉCORD</button>
     </div>
+
     <div id="ranking-section">
-        <table id="ranking-table">
-            <thead><tr><th>Top</th><th>Pts</th><th>Fecha</th></tr></thead>
+        <h3 style="color: var(--bonus-gold); font-size: 0.9em;">🏆 MEJORES PUNTAJES</h3>
+        <table>
+            <thead><tr><th>Nombre</th><th>Pts</th><th>Fecha</th></tr></thead>
             <tbody id="ranking-body"></tbody>
         </table>
-        <button class="option-btn" id="btn-restart" style="margin-top: 15px; width: 100%;">REINTENTAR</button>
+        <button class="option-btn" id="btn-restart" style="margin-top: 20px; width: 100%; background: #475569;">VOLVER A JUGAR</button>
     </div>
 </div>
 
 <script>
-    // Base de datos (misma que antes)
     const database = {
-        "Europa": { "España": ["Portugal", "Francia"], "Francia": ["España", "Italia", "Alemania"], "Alemania": ["Francia", "Polonia", "Austria"], "Italia": ["Francia", "Suiza", "Austria"], "Portugal": ["España"], "Reino Unido": ["Irlanda"], "Polonia": ["Alemania", "Ucrania"], "Grecia": ["Turquía", "Bulgaria"], "Noruega": ["Suecia", "Finlandia"], "Islandia": ["Ninguno"] },
-        "América": { "Brasil": ["Argentina", "Colombia", "Perú"], "Argentina": ["Chile", "Brasil", "Uruguay"], "México": ["EE.UU.", "Guatemala"], "Canadá": ["EE.UU."], "Estados Unidos": ["Canadá", "México"], "Chile": ["Argentina", "Perú", "Bolivia"], "Colombia": ["Venezuela", "Ecuador", "Panamá"] },
-        "Asia": { "China": ["Rusia", "India", "Vietnam"], "Rusia": ["China", "Finlandia", "Ucrania"], "Japón": ["Ninguno"], "India": ["Pakistán", "China"], "Turquía": ["Grecia", "Irak", "Siria"], "Corea del Sur": ["Corea del Norte"] },
-        "África": { "Egipto": ["Libia", "Sudán"], "Sudáfrica": ["Namibia", "Botsuana"], "Marruecos": ["Argelia", "España"], "Nigeria": ["Níger", "Camerún"], "Etiopía": ["Kenia", "Somalia"] }
+        "Europa": { "España": ["Portugal", "Francia", "Andorra"], "Francia": ["España", "Italia", "Bélgica", "Alemania"], "Alemania": ["Francia", "Polonia", "Austria", "Países Bajos"], "Italia": ["Francia", "Suiza", "Austria", "Eslovenia"], "Portugal": ["España"], "Reino Unido": ["Irlanda"], "Polonia": ["Alemania", "República Checa", "Ucrania"], "Grecia": ["Turquía", "Bulgaria", "Albania"], "Noruega": ["Suecia", "Finlandia"], "Suecia": ["Noruega", "Finlandia"], "Suiza": ["Italia", "Francia", "Alemania", "Austria"], "Austria": ["Alemania", "Italia", "Suiza", "Hungría"], "Islandia": ["Ninguno"] },
+        "América": { "Brasil": ["Argentina", "Colombia", "Venezuela", "Uruguay"], "Argentina": ["Chile", "Brasil", "Uruguay", "Bolivia"], "México": ["EE.UU.", "Guatemala", "Belice"], "Canadá": ["EE.UU."], "Estados Unidos": ["Canadá", "México"], "Chile": ["Argentina", "Perú", "Bolivia"], "Colombia": ["Venezuela", "Ecuador", "Panamá", "Brasil"], "Perú": ["Ecuador", "Colombia", "Brasil", "Chile"], "Uruguay": ["Brasil", "Argentina"], "Ecuador": ["Colombia", "Perú"] },
+        "Asia": { "China": ["Rusia", "India", "Vietnam", "Mongolia"], "Rusia": ["China", "Finlandia", "Ucrania", "Kazajistán"], "Japón": ["Ninguno"], "India": ["Pakistán", "China", "Nepal", "Bangladesh"], "Turquía": ["Grecia", "Irak", "Siria", "Irán"], "Corea del Sur": ["Corea del Norte"], "Tailandia": ["Malasia", "Myanmar", "Laos"], "Vietnam": ["China", "Laos", "Camboya"] },
+        "África": { "Egipto": ["Libia", "Sudán", "Israel"], "Sudáfrica": ["Namibia", "Botsuana", "Zimbabue"], "Marruecos": ["Argelia", "España"], "Nigeria": ["Níger", "Camerún", "Chad"], "Etiopía": ["Kenia", "Somalia", "Sudán"], "Kenia": ["Etiopía", "Tanzania", "Uganda"], "Argelia": ["Marruecos", "Túnez", "Libia"] }
     };
 
     const flatCountries = {};
-    for (const cont in database) { for (const c in database[cont]) flatCountries[c] = database[cont][c]; }
+    const continentMap = {};
+    for (const cont in database) {
+        for (const country in database[cont]) {
+            flatCountries[country] = database[cont][country];
+            continentMap[country] = cont;
+        }
+    }
     const countryList = Object.keys(flatCountries);
 
     let score = 0, lives = 5, qCount = 0, ptsLife = 0, timer, timeLeft;
-
-    function updateMap(countryName) {
-        const img = document.getElementById("map-img");
-        img.style.opacity = "0";
-        // Usamos una API de mapas estáticos gratuita (stadiamaps o similar) o un placeholder visual por país
-        // En este caso, usamos un buscador de mapas estáticos basado en el nombre para que sea 100% automático
-        setTimeout(() => {
-            img.src = `https://static-maps.yandex.ru/1.x/?lang=en_US&ll=0,0&z=1&l=map&size=450,200&text=${encodeURIComponent(countryName)}`;
-            img.onload = () => img.style.opacity = "1";
-        }, 300);
-    }
 
     function nextCountry() {
         if (lives <= 0) return;
@@ -122,10 +127,16 @@
         document.body.className = isBonus ? "bonus-active" : "";
         
         const target = countryList[Math.floor(Math.random() * countryList.length)];
-        document.getElementById("country").textContent = target;
+        const continent = continentMap[target];
         
-        // ACTUALIZAR MAPA
-        updateMap(target);
+        document.getElementById("country").textContent = target;
+        document.getElementById("continent-badge").textContent = continent;
+        
+        // Cargar mapa
+        const img = document.getElementById("map-img");
+        img.style.opacity = "0";
+        img.src = `https://static-maps.yandex.ru/1.x/?lang=en_US&ll=0,0&z=1&l=map&size=450,200&text=${encodeURIComponent(target)}`;
+        img.onload = () => img.style.opacity = "1";
 
         const valid = flatCountries[target];
         const container = document.getElementById("options");
@@ -148,7 +159,7 @@
                     if (ptsLife >= 1000) { lives++; ptsLife -= 1000; }
                     b.classList.add("correct-anim");
                     document.getElementById("message").textContent = "✅ ¡Correcto!";
-                    setTimeout(nextCountry, 1200);
+                    setTimeout(nextCountry, 1000);
                 } else {
                     b.classList.add("wrong-anim");
                     handleError();
@@ -175,7 +186,10 @@
         lives--; ptsLife = 0;
         updateStats();
         document.getElementById("message").textContent = "❌ Fallaste";
-        document.querySelectorAll(".option-btn").forEach(btn => btn.disabled = true);
+        document.querySelectorAll(".option-btn").forEach(btn => {
+            if (flatCountries[document.getElementById("country").textContent].includes(btn.textContent)) btn.classList.add("reveal-anim");
+            btn.disabled = true;
+        });
         setTimeout(lives > 0 ? nextCountry : gameOver, 2000);
     }
 
@@ -193,11 +207,11 @@
     }
 
     document.getElementById("btn-save-record").onclick = function() {
-        const name = document.getElementById("player-name").value || "Anónimo";
-        let rank = JSON.parse(localStorage.getItem("geo_rank_v4") || "[]");
+        const name = document.getElementById("player-name").value.trim() || "Anónimo";
+        let rank = JSON.parse(localStorage.getItem("geo_rank_v5") || "[]");
         rank.push({ name, score, date: new Date().toLocaleDateString() });
         rank.sort((a,b) => b.score - a.score);
-        localStorage.setItem("geo_rank_v4", JSON.stringify(rank.slice(0,5)));
+        localStorage.setItem("geo_rank_v5", JSON.stringify(rank.slice(0,5)));
         document.getElementById("save-section").classList.add("hidden");
         renderRanking();
     };
@@ -205,7 +219,7 @@
     document.getElementById("btn-restart").onclick = () => location.reload();
 
     function renderRanking() {
-        const rank = JSON.parse(localStorage.getItem("geo_rank_v4") || "[]");
+        const rank = JSON.parse(localStorage.getItem("geo_rank_v5") || "[]");
         document.getElementById("ranking-body").innerHTML = rank.map(r => `<tr><td>${r.name}</td><td>${r.score}</td><td>${r.date}</td></tr>`).join("");
     }
 
