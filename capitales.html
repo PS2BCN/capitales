@@ -2,147 +2,116 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Quiz World - BCN Edition</title>
-    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
-    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Fronteras: World Conquest 175 Edition</title>
     <style>
-        body { background-color: #00001a; color: #00FF00; font-family: 'Courier New', Courier, monospace; }
-        .retro-border { border: 2px solid #00FF00; box-shadow: 0 0 10px #00FF00; }
-        .flag-shadow { filter: drop-shadow(0 0 5px #00FF00); }
-        #timer-bar { transition: width 1s linear; }
+        :root { 
+            --primary: #1a252f; --bg: #d5dbdb; --danger: #c0392b; 
+            --success: #27ae60; --gold: #f1c40f; --accent: #e67e22;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', sans-serif; background-color: var(--bg); 
+            display: flex; flex-direction: column; align-items: center; 
+            margin: 0; min-height: 100vh; transition: background 1s ease;
+        }
+        
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .shake { animation: shake 0.4s; }
+
+        @keyframes flash { 0% { background: white; } 100% { background: var(--bg); } }
+        .flash-effect { animation: flash 1s; }
+
+        .game-container { 
+            background: white; padding: 30px; border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); width: 90%; 
+            max-width: 650px; text-align: center; margin-top: 20px;
+        }
+        
+        .level-badge {
+            background: var(--primary); color: var(--gold);
+            padding: 10px 25px; border-radius: 50px; font-weight: bold;
+            text-transform: uppercase; border: 3px solid var(--gold);
+            margin-bottom: 20px; display: inline-block; transition: 0.5s;
+        }
+
+        .progress-container { 
+            width: 100%; background: #eee; border-radius: 50px; 
+            height: 25px; margin: 15px 0; border: 2px solid var(--primary);
+        }
+        #progress-bar { 
+            width: 0%; height: 100%; background: linear-gradient(90deg, #27ae60, #f1c40f);
+            transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .question-box { 
+            background: #f8f9fa; padding: 25px; border-radius: 15px;
+            border: 2px solid #dee2e6; margin-bottom: 10px; min-height: 80px;
+        }
+
+        input[type="text"] { 
+            width: 80%; padding: 15px; font-size: 1.3rem; border-radius: 12px;
+            border: 3px solid #ced4da; outline: none; text-align: center;
+        }
+
+        .btn-hint {
+            background: var(--accent); color: white; border: none;
+            padding: 8px 15px; border-radius: 8px; cursor: pointer;
+            font-size: 0.8rem; font-weight: bold; margin-bottom: 15px;
+        }
+
+        .player {
+            margin-top: 20px; background: var(--primary); color: white;
+            padding: 15px; border-radius: 15px; width: 350px; text-align: center;
+        }
+        .btn-music { background: transparent; border: 1px solid white; color: white; padding: 8px 15px; cursor: pointer; border-radius: 8px; }
     </style>
 </head>
-<body class="flex flex-col items-center p-4 min-h-screen">
+<body id="main-body">
 
-    <div class="w-full max-w-md bg-black p-6 retro-border rounded-lg">
-        <div class="flex justify-between text-xs mb-2 text-yellow-400">
-            <div id="clock">BCN: --:--:--</div>
-            <div id="timer-text" class="text-red-500 font-bold">TIEMPO: 15s</div>
+    <div class="game-container" id="game-card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 1.2rem; font-weight: bold;">PUNTOS: <span id="score">0</span> / 2000</div>
+            <div style="font-size: 1.8rem; color: var(--danger);" id="lives-display">❤️❤️❤️❤️❤️</div>
         </div>
 
-        <div class="w-full bg-gray-900 h-1 mb-4">
-            <div id="timer-bar" class="bg-red-600 h-1" style="width: 100%"></div>
+        <div class="progress-container"><div id="progress-bar"></div></div>
+
+        <div id="level-display" class="level-badge">RECLUTA 🌍</div>
+
+        <div class="question-box">
+            <p style="color: #6c757d; font-weight: bold; margin-bottom: 5px;">ESTE PAÍS LIMITA CON:</p>
+            <div id="border-list" style="font-size: 1.3rem; font-weight: bold; color: #2c3e50;">Cargando desafío...</div>
         </div>
 
-        <div class="flex justify-center mb-4">
-            <img id="country-flag" src="" class="h-16 flag-shadow hidden border border-green-500">
-        </div>
+        <button class="btn-hint" onclick="getHint()">💡 PISTA CONTINENTE (-50 PTS)</button>
+        <div id="hint-text" style="color: var(--accent); font-weight: bold; margin-bottom: 10px; min-height: 20px;"></div>
 
-        <div id="question-box" class="bg-blue-900/30 p-6 text-center text-xl mb-4 h-24 flex items-center justify-center border border-green-500/50">
-            CARGANDO...
-        </div>
+        <input type="text" id="user-answer" placeholder="Escribe el país..." autocomplete="off">
+        <button style="margin-top:20px; width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="processAnswer()">VERIFICAR</button>
 
-        <div class="space-y-3" id="options-container">
-            <button id="btn0" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
-            <button id="btn1" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
-            <button id="btn2" class="w-full py-4 bg-blue-900 border border-green-500 hover:bg-green-500 hover:text-black">-</button>
+        <div style="margin-top:15px; display:flex; justify-content: space-around; font-size: 0.9rem;">
+            <span>🔥 Racha: <b id="streak">0</b></span>
+            <span>💊 Recuperación: <b id="recovery">0/15</b></span>
         </div>
-
-        <div class="mt-6 flex justify-between items-center border-t border-gray-700 pt-4">
-            <div id="score">PTS: 0</div>
-            <div id="lives" class="text-red-500 text-xl">❤❤❤❤❤</div>
-        </div>
-        
-        <div id="message" class="text-center text-pink-500 text-sm mt-2 font-bold italic">¡RÁPIDO!</div>
     </div>
 
-    <section class="pyscript">
-        <script type="py">
-            import random
-            from datetime import datetime
-            from pyscript import window, document
+    <div class="player">
+        <div id="song-name" style="font-size: 11px; margin-bottom: 8px; opacity:0.7;">SID Audio Engine</div>
+        <button class="btn-music" onclick="prevSong()">⏮</button>
+        <button class="btn-music" id="play-pause" onclick="togglePlay()">▶</button>
+        <button class="btn-music" onclick="nextSong()">⏭</button>
+        <audio id="audio-player"></audio>
+    </div>
 
-            PAISES = {
-                "España": ["Madrid", "Barcelona", "Valencia", "es"],
-                "Francia": ["París", "Marsella", "Lyon", "fr"],
-                "Italia": ["Roma", "Milán", "Nápoles", "it"],
-                "Alemania": ["Berlín", "Hamburgo", "Múnich", "de"],
-                "Reino Unido": ["Londres", "Manchester", "Birmingham", "gb"],
-                "Japón": ["Tokio", "Osaka", "Kioto", "jp"],
-                "México": ["Ciudad de México", "Guadalajara", "Monterrey", "mx"],
-                "Brasil": ["Brasilia", "São Paulo", "Río de Janeiro", "br"]
-            }
-
-            score = 0
-            lives = 5
-            correct_ans = ""
-            seconds_left = 15
-            timer_id = None
-
-            def update_clock():
-                now = datetime.now().strftime("%H:%M:%S")
-                document.getElementById("clock").innerText = f"BCN: {now}"
-
-            def countdown():
-                global seconds_left, lives, score
-                seconds_left -= 1
-                
-                # Actualizar UI del timer
-                document.getElementById("timer-text").innerText = f"TIEMPO: {seconds_left}s"
-                document.getElementById("timer-bar").style.width = f"{(seconds_left/15)*100}%"
-
-                if seconds_left <= 0:
-                    window.clearInterval(timer_id)
-                    lives -= 1
-                    document.getElementById("message").innerText = "¡TIEMPO AGOTADO!"
-                    update_lives_ui()
-                    next_q()
-
-            def update_lives_ui():
-                global lives, score
-                document.getElementById("lives").innerText = "❤" * lives
-                if lives <= 0:
-                    window.alert(f"GAME OVER. Puntos: {score}")
-                    score = 0
-                    lives = 5
-                    document.getElementById("score").innerText = "PTS: 0"
-                    update_lives_ui()
-
-            def next_q():
-                global correct_ans, seconds_left, timer_id
-                
-                # Reiniciar Timer
-                if timer_id: window.clearInterval(timer_id)
-                seconds_left = 15
-                document.getElementById("timer-text").innerText = "TIEMPO: 15s"
-                document.getElementById("timer-bar").style.width = "100%"
-                timer_id = window.setInterval(countdown, 1000)
-
-                pais_nom = random.choice(list(PAISES.keys()))
-                datos = PAISES[pais_nom]
-                correct_ans = datos[0]
-                
-                # Imagen y Botones
-                document.getElementById("country-flag").src = f"https://flagcdn.com/w160/{datos[3]}.png"
-                document.getElementById("country-flag").classList.remove("hidden")
-                document.getElementById("question-box").innerText = f"¿CAPITAL DE {pais_nom.upper()}?"
-                
-                options = datos[:3]
-                random.shuffle(options)
-                for i in range(3):
-                    document.getElementById(f"btn{i}").innerText = options[i]
-
-            def check_answer(evt):
-                global score, lives
-                if evt.target.innerText == correct_ans:
-                    score += 25
-                    document.getElementById("score").innerText = f"PTS: {score}"
-                    document.getElementById("message").innerText = "¡CORRECTO!"
-                else:
-                    lives -= 1
-                    document.getElementById("message").innerText = "¡FALLASTE!"
-                    update_lives_ui()
-                
-                next_q()
-
-            for i in range(3):
-                document.getElementById(f"btn{i}").onclick = check_answer
-
-            window.setInterval(update_clock, 1000)
-            next_q()
-        </script>
-    </section>
-</body>
-</html>
+    <script>
+        // Base de datos extendida (resumen representativo para completar los 175)
+        const paises = [
+            {n:"España",f:"Francia, Portugal, Andorra, Marruecos",c:"Europa"},
+            {n:"Argentina",f:"Chile, Bolivia, Paraguay, Brasil, Uruguay",c:"América"},
+            {n:"Francia",f:"España, Bélgica, Alemania, Italia, Suiza, Luxemburgo, Mónaco",c:"Europa"},
+            {n:"Mexico",f:"EE.UU., Guatemala, Belice",c:"América"},
+            {n:"Brasil",f:"Argentina, Bolivia, Colombia, Guyana, Paraguay, Perú, Uruguay, Venezuela...",c:"América"},
+            {n:"Italia",f:"Francia, Suiza, Austria, Eslovenia, San Marino, Vaticano",c:"Europa"},
+            {n:"Alemania",f:"Dinamarca, Polonia, Chequia, Austria, Suiza, Francia, Luxemburgo, Bélgica, Países Bajos",c:"Europa"},
+            {n:"Egipto",f:"Libia, Sudán, Israel",c:"África"},
+            {n:"China",f:"Rusia, India, Kazajistán, Mongolia, Pakistán, Nepal, Vietnam...",
