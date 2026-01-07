@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Desafío Extremo: 90 Fronteras</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #38bdf8;
+            --correct: #22c55e;
+            --wrong: #ef4444;
+            --reveal: #3b82f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .game {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 20px;
+            width: 420px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+            position: relative;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #94a3b8;
+        }
+
+        #timer-container {
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            width: 100%;
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.1s linear;
+        }
+
+        h1 { margin: 10px 0; font-size: 2.5em; color: var(--accent); }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .option-btn {
+            background: #334155;
+            color: white;
+            border: 2px solid #475569;
+            padding: 15px;
+            font-size: 1.1em;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover:not(:disabled) { border-color: var(--accent); background: #475569; }
+
+        .correct-anim { background: var(--correct) !important; border-color: #16a34a !important; }
+        .wrong-anim { background: var(--wrong) !important; border-color: #dc2626 !important; }
+        .reveal-anim { background: var(--reveal) !important; border-color: #2563eb !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+
+        #message { height: 20px; margin-top: 15px; font-weight: bold; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="game" id="game-container">
+    <div class="stats">
+        <span>❤️ Vidas: <span id="lives">3</span></span>
+        <span>⭐ Puntos: <span id="score">0</span></span>
+    </div>
+
+    <div id="timer-container"><div id="timer-bar"></div></div>
+
+    <p style="text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin: 0;">¿Qué país limita con?</p>
+    <h1 id="country">...</h1>
+
+    <div class="options-container" id="options"></div>
+
+    <p id="message"></p>
+</div>
+
+<div class="game hidden" id="over-container">
+    <h1>¡Juego Terminado!</h1>
+    <p style="font-size: 1.5em;">Puntuación final: <span id="final-score">0</span></p>
+    <button class="option-btn" onclick="location.reload()" style="margin-top: 20px; width: 100%;">Reintentar</button>
+</div>
+
+<script>
+    const borders = {
+        "España": ["Portugal", "Francia", "Andorra", "Marruecos"], "Portugal": ["España"], "Francia": ["España", "Italia", "Suiza", "Alemania", "Bélgica", "Luxemburgo", "Andorra", "Mónaco"],
+        "Alemania": ["Dinamarca", "Polonia", "República Checa", "Austria", "Suiza", "Francia", "Bélgica", "Países Bajos", "Luxemburgo"],
+        "Brasil": ["Argentina", "Uruguay", "Paraguay", "Bolivia", "Perú", "Colombia", "Venezuela", "Guyana", "Surinam", "Guayana Francesa"],
+        "Argentina": ["Chile", "Bolivia", "Paraguay", "Brasil", "Uruguay"], "México": ["Estados Unidos", "Guatemala", "Belice"],
+        "China": ["Rusia", "Mongolia", "India", "Pakistán", "Vietnam", "Laos", "Myanmar", "Nepal", "Bután", "Corea del Norte", "Kazajistán", "Kirguistán", "Tayikistán", "Afganistán"],
+        "Rusia": ["Finlandia", "Estonia", "Letonia", "Bielorrusia", "Ucrania", "Georgia", "Azerbaiyán", "Kazajistán", "China", "Mongolia", "Corea del Norte", "Noruega", "Polonia", "Lituania"],
+        "Italia": ["Francia", "Suiza", "Austria", "Eslovenia", "San Marino", "Vaticano"], "Colombia": ["Panamá", "Venezuela", "Brasil", "Perú", "Ecuador"],
+        "Egipto": ["Libia", "Sudán", "Israel"], "India": ["Pakistán", "China", "Nepal", "Bután", "Bangladesh", "Myanmar"],
+        "Canadá": ["Estados Unidos"], "Chile": ["Perú", "Bolivia", "Argentina"], "Japón": ["Ninguno"], "Australia": ["Ninguno"],
+        "Noruega": ["Suecia", "Finlandia", "Rusia"], "Turquía": ["Grecia", "Bulgaria", "Georgia", "Armenia", "Azerbaiyán", "Irán", "Irak", "Siria"],
+        "Perú": ["Ecuador", "Colombia", "Brasil", "Bolivia", "Chile"], "Bolivia": ["Brasil", "Paraguay", "Argentina", "Chile", "Perú"],
+        "Reino Unido": ["Irlanda"], "Grecia": ["Albania", "Macedonia del Norte", "Bulgaria", "Turquía"], "Sudáfrica": ["Namibia", "Botsuana", "Zimbabue", "Mozambique", "Lesoto", "Suazilandia"],
+        "Tailandia": ["Myanmar", "Laos", "Camboya", "Malasia"], "Vietnam": ["China", "Laos", "Camboya"], "Indonesia": ["Malasia", "Papúa Nueva Guinea", "Timor Oriental"],
+        "Uruguay": ["Argentina", "Brasil"], "Costa Rica": ["Nicaragua", "Panamá"], "Panamá": ["Costa Rica", "Colombia"], "Suiza": ["Francia", "Italia", "Austria", "Alemania", "Liechtenstein"],
+        "Polonia": ["Alemania", "República Checa", "Eslovaquia", "Ucrania", "Bielorrusia", "Lituania", "Rusia"], "Marruecos": ["Argelia", "España", "Sáhara Occidental"],
+        "Nigeria": ["Benín", "Níger", "Chad", "Camerún"], "Etiopía": ["Sudán", "Eritrea", "Yibuti", "Somalia", "Kenia", "Sudán del Sur"], "Suecia": ["Noruega", "Finlandia"],
+        "Finlandia": ["Noruega", "Suecia", "Rusia"], "Corea del Sur": ["Corea del Norte"], "Arabia Saudita": ["Jordania", "Irak", "Kuwait", "Catar", "Emiratos Árabes", "Omán", "Yemen"],
+        "Israel": ["Líbano", "Siria", "Jordania", "Egipto"], "Kazajistán": ["Rusia", "China", "Kirguistán", "Uzbekistán", "Turkmenistán"],
+        "Ucrania": ["Rusia", "Bielorrusia", "Polonia", "Eslovaquia", "Hungría", "Rumanía", "Moldavia"], "Austria": ["Alemania", "República Checa", "Eslovaquia", "Hungría", "Eslovenia", "Italia", "Suiza", "Liechtenstein"],
+        "Hungría": ["Austria", "Eslovaquia", "Ucrania", "Rumanía", "Serbia", "Croacia", "Eslovenia"], "Bélgica": ["Francia", "Luxemburgo", "Alemania", "Países Bajos"],
+        "Países Bajos": ["Bélgica", "Alemania"], "Paraguay": ["Bolivia", "Brasil", "Argentina"], "Ecuador": ["Colombia", "Perú"], "Venezuela": ["Colombia", "Brasil", "Guyana"],
+        "Guatemala": ["México", "Belice", "Honduras", "El Salvador"], "Honduras": ["Guatemala", "El Salvador", "Nicaragua"], "Nicaragua": ["Honduras", "Costa Rica"],
+        "Cuba": ["Ninguno"], "Islandia": ["Ninguno"], "Nueva Zelanda": ["Ninguno"], "Filipinas": ["Ninguno"], "Madagascar": ["Ninguno"],
+        "Irak": ["Turquía", "Irán", "Kuwait", "Arabia Saudita", "Jordania", "Siria"], "Irán": ["Irak", "Turquía", "Armenia", "Azerbaiyán", "Turkmenistán", "Afganistán", "Pakistán"],
+        "Paquistán": ["Irán", "Afganistán", "China", "India"], "Bolivia": ["Brasil", "Paraguay", "Argentina", "Chile", "Perú"], "Guyana": ["Venezuela", "Brasil", "Surinam"],
+        "Surinam": ["Guyana", "Brasil", "Guayana Francesa"], "Angola": ["Congo", "Rep. Dem. Congo", "Zambia", "Namibia"], "Namibia": ["Angola", "Zambia", "Botsuana", "Sudáfrica"],
+        "Botsuana": ["Namibia", "Zambia", "Zimbabue", "Sudáfrica"], "Zimbabue": ["Zambia", "Botsuana", "Sudáfrica", "Mozambique"], "Mozambique": ["Tanzania", "Malaui", "Zambia", "Zimbabue", "Sudáfrica", "Suazilandia"],
+        "Tanzania": ["Kenia", "Uganda", "Ruanda", "Burundi", "Rep. Dem. Congo", "Zambia", "Malaui", "Mozambique"], "Kenia": ["Etiopía", "Somalia", "Tanzania", "Uganda", "Sudán del Sur"],
+        "Uganda": ["Sudán del Sur", "Rep. Dem. Congo", "Ruanda", "Tanzania", "Kenia"], "Argelia": ["Túnez", "Libia", "Níger", "Malí", "Mauritania", "Marruecos", "Sáhara Occidental"],
+        "Túnez": ["Argelia", "Libia"], "Libia": ["Túnez", "Argelia", "Níger", "Chad", "Sudán", "Egipto"], "Senegal": ["Mauritania", "Malí", "Guinea", "Guinea-Bisáu", "Gambia"]
+    };
+
+    const countries = Object.keys(borders);
+    let currentCountry = "";
+    let score = 0;
+    let lives = 3;
+    let timer;
+    let timeLeft;
+
+    function startTimer() {
+        timeLeft = 100;
+        document.getElementById("timer-bar").style.width = "100%";
+        clearInterval(timer);
+        timer = setInterval(() => {
+            timeLeft -= 1;
+            document.getElementById("timer-bar").style.width = timeLeft + "%";
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                handleError(null, true);
+            }
+        }, 100);
+    }
+
+    function nextCountry() {
+        if (lives <= 0) return gameOver();
+        document.getElementById("message").textContent = "";
+        currentCountry = countries[Math.floor(Math.random() * countries.length)];
+        document.getElementById("country").textContent = currentCountry;
+        generateOptions();
+        startTimer();
+    }
+
+    function generateOptions() {
+        const container = document.getElementById("options");
+        container.innerHTML = "";
+        const valid = borders[currentCountry];
+        let options = [];
+
+        options.push(valid[Math.floor(Math.random() * valid.length)]);
+
+        while (options.length < 3) {
+            let fake = countries[Math.floor(Math.random() * countries.length)];
+            if (!valid.includes(fake) && fake !== currentCountry && !options.includes(fake)) {
+                options.push(fake);
+            }
+        }
+
+        options.sort(() => Math.random() - 0.5);
+        options.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.className = "option-btn";
+            btn.textContent = opt;
+            btn.onclick = () => checkAnswer(opt, btn);
+            container.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selected, btn) {
+        clearInterval(timer);
+        const valid = borders[currentCountry];
+        const allBtns = document.querySelectorAll(".option-btn");
+        allBtns.forEach(b => b.disabled = true);
+
+        if (valid.includes(selected) || (valid[0] === "Ninguno" && selected === "Ninguno")) {
+            score++;
+            btn.classList.add("correct-anim");
+            document.getElementById("score").textContent = score;
+            setTimeout(nextCountry, 1200);
+        } else {
+            handleError(btn, false);
+        }
+    }
+
+    function handleError(btn, isTimeout) {
+        lives--;
+        document.getElementById("lives").textContent = lives;
+        const valid = borders[currentCountry];
+        const allBtns = document.querySelectorAll(".option-btn");
+        allBtns.forEach(b => {
+            b.disabled = true;
+            if (valid.includes(b.textContent) || (valid[0] === "Ninguno" && b.textContent === "Ninguno")) {
+                b.classList.add("reveal-anim");
+            }
+        });
+
+        if (btn) btn.classList.add("wrong-anim");
+        document.getElementById("message").textContent = isTimeout ? "⌛ ¡Tiempo agotado!" : "❌ Incorrecto";
+        
+        setTimeout(lives > 0 ? nextCountry : gameOver, 2000);
+    }
+
+    function gameOver() {
+        document.getElementById("game-container").classList.add("hidden");
+        document.getElementById("over-container").classList.remove("hidden");
+        document.getElementById("final-score").textContent = score;
+    }
+
+    nextCountry();
+</script>
+</body>
+</html>
