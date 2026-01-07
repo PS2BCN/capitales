@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Fronteras Challenge: Hall of Fame</title>
+    <title>Fronteras Challenge: Pro Edition</title>
     <style>
         :root {
             --bg: #0f172a; --card: #1e293b; --accent: #38bdf8;
@@ -34,7 +34,7 @@
         .correct-anim { background: var(--correct) !important; border-color: #16a34a !important; }
         .wrong-anim { background: var(--wrong) !important; border-color: #dc2626 !important; }
         .reveal-anim { background: var(--reveal) !important; border-color: #2563eb !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
-        #message { height: 24px; margin-top: 15px; font-weight: bold; }
+        #message { height: 24px; margin-top: 15px; font-weight: bold; font-size: 1.1em; }
         .hidden { display: none !important; }
         
         table { width: 100%; margin-top: 15px; border-collapse: collapse; font-size: 0.85em; }
@@ -54,7 +54,7 @@
     <div id="bonus-tag">🌟 BONUS: ¡50 PUNTOS! 🌟</div>
     
     <p class="question-text">¿Con qué país tiene frontera...?</p>
-    <h1 id="country">Cargando...</h1>
+    <h1 id="country">...</h1>
     
     <div class="options-container" id="options"></div>
     <p id="message"></p>
@@ -63,7 +63,7 @@
 
 <div class="game hidden" id="over-container">
     <h1 style="color: var(--wrong);">¡GAME OVER!</h1>
-    <p style="font-size: 1.5em; margin: 5px 0;">Puntaje: <span id="final-score">0</span></p>
+    <p style="font-size: 1.5em; margin: 5px 0;">Puntaje Final: <span id="final-score">0</span></p>
     
     <div id="save-score-section">
         <input type="text" id="player-name" placeholder="Tu nombre..." maxlength="15">
@@ -130,7 +130,7 @@
     }
 
     const countryList = Object.keys(flatCountries);
-    let score = 0, lives = 5, qCount = 0, ptsLife = 0, timer, timeLeft, isBonus;
+    let score = 0, lives = 5, qCount = 0, ptsLife = 0, combo = 0, timer, timeLeft, isBonus;
 
     function nextCountry() {
         if (lives <= 0) return gameOver();
@@ -139,39 +139,25 @@
         
         document.getElementById("bonus-tag").style.display = isBonus ? "block" : "none";
         document.body.className = isBonus ? "bonus-active" : "";
-        document.getElementById("message").textContent = "";
         
-        // Elegir país nuevo
         let target;
         const currentDisplayed = document.getElementById("country").textContent;
         do {
             target = countryList[Math.floor(Math.random() * countryList.length)];
         } while (target === currentDisplayed);
         
-        // MOSTRAR PAÍS
         document.getElementById("country").textContent = target;
         
         const validOptions = flatCountries[target];
         const continent = continentMap[target];
-        
-        // Generar Opciones
         const container = document.getElementById("options");
         container.innerHTML = "";
         
-        let opts = [];
-        // 1. Añadir una correcta
-        opts.push(validOptions[Math.floor(Math.random() * validOptions.length)]);
-        
-        // 2. Añadir incorrectas del mismo continente
+        let opts = [validOptions[Math.floor(Math.random() * validOptions.length)]];
         const continentPeers = Object.keys(database[continent]).filter(c => c !== target && !validOptions.includes(c));
         
         while (opts.length < 3) {
-            let fake;
-            if (continentPeers.length >= 2) {
-                fake = continentPeers[Math.floor(Math.random() * continentPeers.length)];
-            } else {
-                fake = countryList[Math.floor(Math.random() * countryList.length)];
-            }
+            let fake = continentPeers.length >= 2 ? continentPeers[Math.floor(Math.random() * continentPeers.length)] : countryList[Math.floor(Math.random() * countryList.length)];
             if (!opts.includes(fake)) opts.push(fake);
         }
 
@@ -190,35 +176,48 @@
         clearInterval(timer);
         const target = document.getElementById("country").textContent;
         const valid = flatCountries[target];
-        const allBtns = document.querySelectorAll(".option-btn");
-        allBtns.forEach(b => b.disabled = true);
+        document.querySelectorAll(".option-btn").forEach(b => b.disabled = true);
 
         if (valid.includes(selected) || (valid[0] === "Ninguno" && selected === "Ninguno")) {
+            combo++;
             let p = isBonus ? 50 : 25;
             score += p; ptsLife += p;
             btn.classList.add("correct-anim");
+            
             if (ptsLife >= 1000) { lives += 0.5; ptsLife -= 1000; }
+            
+            showComboMessage();
             updateStats();
             setTimeout(nextCountry, 1000);
         } else {
+            combo = 0;
             btn.classList.add("wrong-anim");
             handleError();
         }
+    }
+
+    function showComboMessage() {
+        const msg = document.getElementById("message");
+        msg.style.color = "var(--correct)";
+        if (combo === 5) msg.textContent = "🔥 ¡ESTÁS EN RACHA! 🔥";
+        else if (combo === 10) msg.textContent = "🏆 ¡ERES UN GENIO! 🏆";
+        else if (combo > 10 && combo % 5 === 0) msg.textContent = "⚡ ¡IMPARABLE! ⚡";
+        else msg.textContent = "✅ ¡Correcto!";
     }
 
     function startTimer() {
         timeLeft = 100;
         clearInterval(timer);
         timer = setInterval(() => {
-            timeLeft -= (100 / 150); // 15 segundos
+            timeLeft -= (100 / 150);
             document.getElementById("timer-bar").style.width = timeLeft + "%";
-            if (timeLeft <= 0) handleError();
+            if (timeLeft <= 0) { combo = 0; handleError(); }
         }, 100);
     }
 
     function handleError() {
         clearInterval(timer);
-        lives--; ptsLife = 0;
+        lives--; ptsLife = 0; combo = 0;
         updateStats();
         
         const target = document.getElementById("country").textContent;
