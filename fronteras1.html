@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Fronteras Challenge: Geografía Regional</title>
+    <title>Fronteras Challenge: Hall of Fame</title>
     <style>
         :root {
             --bg: #0f172a; --card: #1e293b; --accent: #38bdf8;
@@ -21,9 +21,11 @@
         #timer-container { width: 100%; height: 10px; background: #334155; border-radius: 5px; margin-bottom: 20px; overflow: hidden; }
         #timer-bar { width: 100%; height: 100%; background: var(--accent); transition: width 0.1s linear; }
         #bonus-tag { color: var(--bonus-gold); font-weight: bold; display: none; margin-bottom: 5px; animation: pulse 0.8s infinite; }
+        
         .question-text { color: #94a3b8; text-transform: uppercase; font-size: 0.85em; letter-spacing: 1.2px; margin-bottom: 0; }
-        h1 { margin: 5px 0 15px 0; font-size: 2.8em; color: var(--accent); }
-        .options-container { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        h1 { margin: 10px 0 20px 0; font-size: 3em; color: var(--accent); text-shadow: 2px 2px rgba(0,0,0,0.3); }
+        
+        .options-container { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
         .option-btn {
             background: #334155; color: white; border: 2px solid #475569; padding: 14px;
             font-size: 1.1em; border-radius: 12px; cursor: pointer; transition: 0.2s; font-weight: bold; width: 100%;
@@ -31,8 +33,10 @@
         .option-btn:hover:not(:disabled) { border-color: var(--accent); background: #475569; }
         .correct-anim { background: var(--correct) !important; border-color: #16a34a !important; }
         .wrong-anim { background: var(--wrong) !important; border-color: #dc2626 !important; }
-        .reveal-anim { background: var(--reveal) !important; border-color: #2563eb !important; }
+        .reveal-anim { background: var(--reveal) !important; border-color: #2563eb !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        #message { height: 24px; margin-top: 15px; font-weight: bold; }
         .hidden { display: none !important; }
+        
         table { width: 100%; margin-top: 15px; border-collapse: collapse; font-size: 0.85em; }
         th, td { padding: 8px; border-bottom: 1px solid #334155; text-align: left; }
         input[type="text"] { width: 90%; padding: 12px; border-radius: 8px; border: 1px solid var(--accent); margin-bottom: 10px; background: #0f172a; color: white; text-align: center; }
@@ -48,23 +52,27 @@
     </div>
     <div id="timer-container"><div id="timer-bar"></div></div>
     <div id="bonus-tag">🌟 BONUS: ¡50 PUNTOS! 🌟</div>
+    
     <p class="question-text">¿Con qué país tiene frontera...?</p>
-    <h1 id="country">...</h1>
+    <h1 id="country">Cargando...</h1>
+    
     <div class="options-container" id="options"></div>
-    <p id="message" style="height: 20px; font-weight: bold; margin-top: 10px;"></p>
+    <p id="message"></p>
     <p style="font-size: 0.8em; color: #94a3b8;">Vida extra (+0.5) en: <span id="streak-bar">0</span>/1000 pts</p>
 </div>
 
 <div class="game hidden" id="over-container">
     <h1 style="color: var(--wrong);">¡GAME OVER!</h1>
-    <p style="font-size: 1.5em;">Puntaje: <span id="final-score">0</span></p>
+    <p style="font-size: 1.5em; margin: 5px 0;">Puntaje: <span id="final-score">0</span></p>
+    
     <div id="save-score-section">
         <input type="text" id="player-name" placeholder="Tu nombre..." maxlength="15">
         <button class="option-btn" id="save-btn" style="background: var(--accent); color: #000; margin-bottom: 20px;">GUARDAR RÉCORD</button>
     </div>
+
     <div id="ranking-section">
         <h3 style="color: var(--bonus-gold);">🏆 TOP 5 MEJORES</h3>
-        <table id="ranking-table">
+        <table>
             <thead><tr><th>Nombre</th><th>Pts</th><th>Fecha</th></tr></thead>
             <tbody id="ranking-body"></tbody>
         </table>
@@ -75,4 +83,189 @@
 <script>
     const database = {
         "Europa": {
-            "España": ["Portugal", "Francia", "Andorra", "Marruecos"], "Portugal": ["España"], "Francia
+            "España": ["Portugal", "Francia", "Andorra", "Marruecos"], "Portugal": ["España"], "Francia": ["España", "Italia", "Suiza", "Alemania", "Bélgica", "Luxemburgo", "Andorra", "Mónaco"],
+            "Alemania": ["Dinamarca", "Polonia", "República Checa", "Austria", "Suiza", "Francia", "Bélgica", "Países Bajos"], "Italia": ["Francia", "Suiza", "Austria", "Eslovenia", "San Marino", "Vaticano"],
+            "Reino Unido": ["Irlanda"], "Irlanda": ["Reino Unido"], "Noruega": ["Suecia", "Finlandia", "Rusia"], "Suecia": ["Noruega", "Finlandia"], "Finlandia": ["Noruega", "Suecia", "Rusia"],
+            "Suiza": ["Francia", "Italia", "Austria", "Alemania", "Liechtenstein"], "Austria": ["Alemania", "República Checa", "Eslovaquia", "Hungría", "Eslovenia", "Italia", "Suiza", "Liechtenstein"],
+            "Polonia": ["Alemania", "República Checa", "Eslovaquia", "Ucrania", "Bielorrusia", "Lituania", "Rusia"], "Países Bajos": ["Bélgica", "Alemania"], "Bélgica": ["Francia", "Luxemburgo", "Alemania", "Países Bajos"],
+            "Grecia": ["Albania", "Macedonia del Norte", "Bulgaria", "Turquía"], "Hungría": ["Austria", "Eslovaquia", "Ucrania", "Rumanía", "Serbia", "Croacia", "Eslovenia"], "Islandia": ["Ninguno"], "Ucrania": ["Rusia", "Bielorrusia", "Polonia", "Eslovaquia", "Hungría", "Rumanía", "Moldavia"], "Rumanía": ["Hungría", "Ucrania", "Moldavia", "Bulgaria", "Serbia"]
+        },
+        "América": {
+            "Brasil": ["Argentina", "Uruguay", "Paraguay", "Bolivia", "Perú", "Colombia", "Venezuela", "Guyana", "Surinam"], "Argentina": ["Chile", "Bolivia", "Paraguay", "Brasil", "Uruguay"],
+            "México": ["Estados Unidos", "Guatemala", "Belice"], "Canadá": ["Estados Unidos"], "Estados Unidos": ["Canadá", "México"], "Chile": ["Perú", "Bolivia", "Argentina"],
+            "Colombia": ["Panamá", "Venezuela", "Brasil", "Perú", "Ecuador"], "Perú": ["Ecuador", "Colombia", "Brasil", "Bolivia", "Chile"], "Bolivia": ["Brasil", "Paraguay", "Argentina", "Chile", "Perú"],
+            "Uruguay": ["Argentina", "Brasil"], "Paraguay": ["Bolivia", "Brasil", "Argentina"], "Ecuador": ["Colombia", "Perú"], "Venezuela": ["Colombia", "Brasil", "Guyana"],
+            "Panamá": ["Costa Rica", "Colombia"], "Costa Rica": ["Nicaragua", "Panamá"], "Nicaragua": ["Honduras", "Costa Rica"], "Honduras": ["Guatemala", "El Salvador", "Nicaragua"],
+            "Guatemala": ["México", "Belice", "Honduras", "El Salvador"], "Cuba": ["Ninguno"], "Jamaica": ["Ninguno"]
+        },
+        "Asia": {
+            "China": ["Rusia", "Mongolia", "India", "Pakistán", "Vietnam", "Laos", "Myanmar", "Nepal", "Bután", "Corea del Norte", "Kazajistán"],
+            "Rusia": ["Finlandia", "Estonia", "Letonia", "Bielorrusia", "Ucrania", "Georgia", "Azerbaiyán", "Kazajistán", "China", "Mongolia", "Corea del Norte", "Noruega"],
+            "Japón": ["Ninguno"], "Corea del Sur": ["Corea del Norte"], "India": ["Pakistán", "China", "Nepal", "Bután", "Bangladesh", "Myanmar"], "Pakistán": ["Irán", "Afganistán", "China", "India"],
+            "Tailandia": ["Myanmar", "Laos", "Camboya", "Malasia"], "Vietnam": ["China", "Laos", "Camboya"], "Indonesia": ["Malasia", "Papúa Nueva Guinea", "Timor Oriental"],
+            "Filipinas": ["Ninguno"], "Turquía": ["Grecia", "Bulgaria", "Georgia", "Armenia", "Irán", "Irak", "Siria"], "Irán": ["Irak", "Turquía", "Armenia", "Azerbaiyán", "Turkmenistán", "Afganistán", "Pakistán"],
+            "Irak": ["Turquía", "Irán", "Kuwait", "Arabia Saudita", "Jordania", "Siria"], "Arabia Saudita": ["Jordania", "Irak", "Kuwait", "Catar", "Emiratos Árabes Unidos", "Omán", "Yemen"],
+            "Israel": ["Líbano", "Siria", "Jordania", "Egipto"], "Kazajistán": ["Rusia", "China", "Kirguistán", "Uzbekistán", "Turkmenistán"], "Singapur": ["Malasia"], "Malasia": ["Tailandia", "Indonesia", "Brunéi"]
+        },
+        "África": {
+            "Egipto": ["Libia", "Sudán", "Israel"], "Sudáfrica": ["Namibia", "Botsuana", "Zimbabue", "Mozambique", "Suazilandia", "Lesoto"], "Marruecos": ["Argelia", "España"],
+            "Argelia": ["Túnez", "Libia", "Níger", "Malí", "Mauritania", "Marruecos"], "Nigeria": ["Benín", "Níger", "Chad", "Camerún"], "Etiopía": ["Sudán", "Eritrea", "Yibuti", "Somalia", "Kenia"],
+            "Kenia": ["Etiopía", "Somalia", "Tanzania", "Uganda"], "Tanzania": ["Kenia", "Uganda", "Ruanda", "Burundi", "Congo", "Zambia", "Malaui", "Mozambique"],
+            "Congo": ["República Centroafricana", "Uganda", "Ruanda", "Burundi", "Tanzania", "Zambia", "Angola"], "Angola": ["Congo", "Zambia", "Namibia"],
+            "Namibia": ["Angola", "Zambia", "Botsuana", "Sudáfrica"], "Ghana": ["Costa de Marfil", "Burkina Faso", "Togo"], "Senegal": ["Mauritania", "Malí", "Guinea", "Guinea-Bisáu", "Gambia"],
+            "Libia": ["Egipto", "Sudán", "Chad", "Níger", "Argelia", "Túnez"], "Madagascar": ["Ninguno"], "Túnez": ["Argelia", "Libia"], "Mali": ["Argelia", "Níger", "Burkina Faso", "Costa de Marfil", "Guinea", "Senegal"]
+        },
+        "Oceanía": {
+            "Australia": ["Ninguno"], "Nueva Zelanda": ["Ninguno"], "Fiyi": ["Ninguno"], "Papúa Nueva Guinea": ["Indonesia"]
+        }
+    };
+
+    const flatCountries = {};
+    const continentMap = {};
+    for (const cont in database) {
+        for (const country in database[cont]) {
+            flatCountries[country] = database[cont][country];
+            continentMap[country] = cont;
+        }
+    }
+
+    const countryList = Object.keys(flatCountries);
+    let score = 0, lives = 5, qCount = 0, ptsLife = 0, timer, timeLeft, isBonus;
+
+    function nextCountry() {
+        if (lives <= 0) return gameOver();
+        qCount++;
+        isBonus = (qCount % 5 === 0);
+        
+        document.getElementById("bonus-tag").style.display = isBonus ? "block" : "none";
+        document.body.className = isBonus ? "bonus-active" : "";
+        document.getElementById("message").textContent = "";
+        
+        // Elegir país nuevo
+        let target;
+        const currentDisplayed = document.getElementById("country").textContent;
+        do {
+            target = countryList[Math.floor(Math.random() * countryList.length)];
+        } while (target === currentDisplayed);
+        
+        // MOSTRAR PAÍS
+        document.getElementById("country").textContent = target;
+        
+        const validOptions = flatCountries[target];
+        const continent = continentMap[target];
+        
+        // Generar Opciones
+        const container = document.getElementById("options");
+        container.innerHTML = "";
+        
+        let opts = [];
+        // 1. Añadir una correcta
+        opts.push(validOptions[Math.floor(Math.random() * validOptions.length)]);
+        
+        // 2. Añadir incorrectas del mismo continente
+        const continentPeers = Object.keys(database[continent]).filter(c => c !== target && !validOptions.includes(c));
+        
+        while (opts.length < 3) {
+            let fake;
+            if (continentPeers.length >= 2) {
+                fake = continentPeers[Math.floor(Math.random() * continentPeers.length)];
+            } else {
+                fake = countryList[Math.floor(Math.random() * countryList.length)];
+            }
+            if (!opts.includes(fake)) opts.push(fake);
+        }
+
+        opts.sort(() => Math.random() - 0.5).forEach(o => {
+            const b = document.createElement("button");
+            b.className = "option-btn";
+            b.textContent = o;
+            b.onclick = () => checkAnswer(o, b);
+            container.appendChild(b);
+        });
+        
+        startTimer();
+    }
+
+    function checkAnswer(selected, btn) {
+        clearInterval(timer);
+        const target = document.getElementById("country").textContent;
+        const valid = flatCountries[target];
+        const allBtns = document.querySelectorAll(".option-btn");
+        allBtns.forEach(b => b.disabled = true);
+
+        if (valid.includes(selected) || (valid[0] === "Ninguno" && selected === "Ninguno")) {
+            let p = isBonus ? 50 : 25;
+            score += p; ptsLife += p;
+            btn.classList.add("correct-anim");
+            if (ptsLife >= 1000) { lives += 0.5; ptsLife -= 1000; }
+            updateStats();
+            setTimeout(nextCountry, 1000);
+        } else {
+            btn.classList.add("wrong-anim");
+            handleError();
+        }
+    }
+
+    function startTimer() {
+        timeLeft = 100;
+        clearInterval(timer);
+        timer = setInterval(() => {
+            timeLeft -= (100 / 150); // 15 segundos
+            document.getElementById("timer-bar").style.width = timeLeft + "%";
+            if (timeLeft <= 0) handleError();
+        }, 100);
+    }
+
+    function handleError() {
+        clearInterval(timer);
+        lives--; ptsLife = 0;
+        updateStats();
+        
+        const target = document.getElementById("country").textContent;
+        const valid = flatCountries[target];
+        document.querySelectorAll(".option-btn").forEach(btn => {
+            if (valid.includes(btn.textContent)) btn.classList.add("reveal-anim");
+            btn.disabled = true;
+        });
+        
+        document.getElementById("message").textContent = "❌ Incorrecto";
+        document.getElementById("message").style.color = "var(--wrong)";
+        
+        setTimeout(lives > 0 ? nextCountry : gameOver, 2000);
+    }
+
+    function updateStats() {
+        document.getElementById("score").textContent = score;
+        document.getElementById("lives").textContent = lives;
+        document.getElementById("streak-bar").textContent = ptsLife;
+    }
+
+    function gameOver() {
+        document.getElementById("game-container").classList.add("hidden");
+        document.getElementById("over-container").classList.remove("hidden");
+        document.getElementById("final-score").textContent = score;
+        updateRankingTable();
+    }
+
+    document.getElementById("save-btn").onclick = function() {
+        const name = document.getElementById("player-name").value.trim() || "Anónimo";
+        const dateStr = new Date().toLocaleString('es-ES', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+        let ranking = JSON.parse(localStorage.getItem("rank_geo_final") || "[]");
+        ranking.push({ name, score, date: dateStr });
+        ranking.sort((a, b) => b.score - a.score);
+        localStorage.setItem("rank_geo_final", JSON.stringify(ranking.slice(0, 5)));
+        document.getElementById("save-score-section").classList.add("hidden");
+        updateRankingTable();
+    };
+
+    document.getElementById("restart-btn").onclick = () => location.reload();
+
+    function updateRankingTable() {
+        const ranking = JSON.parse(localStorage.getItem("rank_geo_final") || "[]");
+        document.getElementById("ranking-body").innerHTML = ranking.map(r => `<tr><td>${r.name}</td><td>${r.score}</td><td>${r.date}</td></tr>`).join("");
+    }
+
+    nextCountry();
+</script>
+</body>
+</html>
