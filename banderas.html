@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reto Mundial: 5 Vidas</title>
+    <title>Reto Mundial: 5 Vidas (Opciones)</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding-top: 20px; background-color: #f0f2f5; }
         .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); width: 450px; text-align: center; position: relative; }
@@ -16,12 +16,17 @@
         h2 { color: #2c3e50; margin: 5px 0; font-size: 1.5rem; }
         .question-box { background: #e9ecef; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 1.4rem; font-weight: bold; color: #2c3e50; }
         
-        input[type="text"] { width: 85%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 1.1rem; text-align: center; }
-        input[type="text"]:focus { border-color: #3498db; outline: none; }
+        /* Contenedor de opciones */
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         
-        .btn-main { background: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; transition: 0.3s; }
-        .btn-main:hover { background: #2980b9; }
-        .btn-main:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-option { 
+            background: white; border: 2px solid #3498db; color: #2c3e50; 
+            padding: 12px 10px; border-radius: 8px; cursor: pointer; 
+            font-size: 1rem; font-weight: 600; transition: 0.2s;
+            display: flex; justify-content: center; align-items: center; min-height: 50px;
+        }
+        .btn-option:hover { background: #ebf5fb; border-color: #2980b9; }
+        .btn-option:disabled { opacity: 0.6; cursor: not-allowed; }
 
         #feedback { margin-top: 15px; min-height: 55px; font-weight: bold; border-radius: 8px; padding: 10px; display: none; }
         .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
@@ -52,9 +57,8 @@
 
     <div id="question" class="question-box">País</div>
     
-    <input type="text" id="userResponse" placeholder="Escribe la capital..." autocomplete="off" onkeypress="if(event.key==='Enter') checkAnswer()">
-    
-    <button id="sendBtn" class="btn-main" onclick="checkAnswer()">Enviar respuesta</button>
+    <div class="options-grid" id="options-container">
+        </div>
 
     <div id="feedback"></div>
     <div style="margin-top:15px; font-size: 0.8rem; color: #95a5a6;">Aciertos: <span id="score">0</span></div>
@@ -113,87 +117,3 @@
         {p: "Tuvalu", c: "Funafuti", cont: "Oceanía", f: "tv"}, {p: "Ucrania", c: "Kiev", cont: "Europa", f: "ua"}, {p: "Uganda", c: "Kampala", cont: "África", f: "ug"}, {p: "Uruguay", c: "Montevideo", cont: "América", f: "uy"},
         {p: "Uzbekistán", c: "Taskent", cont: "Asia", f: "uz"}, {p: "Vanuatu", c: "Port Vila", cont: "Oceanía", f: "vu"}, {p: "Venezuela", c: "Caracas", cont: "América", f: "ve"}, {p: "Vietnam", c: "Hanói", cont: "Asia", f: "vn"},
         {p: "Yemen", c: "Saná", cont: "Asia", f: "ye"}, {p: "Yibuti", c: "Yibuti", cont: "África", f: "dj"}, {p: "Zambia", c: "Lusaka", cont: "África", f: "zm"}, {p: "Zimbabue", c: "Harare", cont: "África", f: "zw"}
-    ];
-
-    let preguntaActual;
-    let vidas = 5;
-    let aciertos = 0;
-
-    function nuevaPregunta() {
-        if (vidas <= 0) return;
-
-        preguntaActual = datos[Math.floor(Math.random() * datos.length)];
-        
-        document.getElementById('question').textContent = preguntaActual.p;
-        document.getElementById('continent').textContent = preguntaActual.cont;
-        document.getElementById('flag').src = `https://flagcdn.com/w160/${preguntaActual.f}.png`;
-        
-        const feedback = document.getElementById('feedback');
-        feedback.style.display = "none";
-        
-        const input = document.getElementById('userResponse');
-        input.disabled = false;
-        input.value = "";
-        input.focus();
-        document.getElementById('sendBtn').disabled = false;
-    }
-
-    function normalize(str) {
-        return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-    }
-
-    function checkAnswer() {
-        const inputElement = document.getElementById('userResponse');
-        const feedback = document.getElementById('feedback');
-        const userText = inputElement.value;
-
-        if (userText.trim() === "" || inputElement.disabled) return;
-
-        inputElement.disabled = true;
-        document.getElementById('sendBtn').disabled = true;
-        feedback.style.display = "block";
-
-        if (normalize(userText) === normalize(preguntaActual.c)) {
-            aciertos++;
-            document.getElementById('score').textContent = aciertos;
-            feedback.innerHTML = "¡Correcto! 🌟";
-            feedback.className = "correct";
-            setTimeout(nuevaPregunta, 1000); 
-        } else {
-            vidas--;
-            updateLives();
-            feedback.innerHTML = `Incorrecto ❌ <span class="solution">La capital era: <b>${preguntaActual.c}</b></span>`;
-            feedback.className = "incorrect";
-            
-            if (vidas > 0) {
-                setTimeout(nuevaPregunta, 2500); 
-            } else {
-                setTimeout(gameOver, 2500);
-            }
-        }
-    }
-
-    function updateLives() {
-        const display = document.getElementById('lives-display');
-        display.textContent = "❤️".repeat(vidas) + "🖤".repeat(5 - vidas);
-    }
-
-    function gameOver() {
-        document.getElementById('game-over').style.display = "flex";
-        document.getElementById('final-score').textContent = `Lograste ${aciertos} aciertos.`;
-    }
-
-    function resetGame() {
-        vidas = 5;
-        aciertos = 0;
-        document.getElementById('score').textContent = "0";
-        updateLives();
-        document.getElementById('game-over').style.display = "none";
-        nuevaPregunta();
-    }
-
-    nuevaPregunta();
-</script>
-
-</body>
-</html>
