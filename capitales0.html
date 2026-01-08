@@ -3,111 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Global Conquest - Retro Mobile</title>
+    <title>Global Conquest - Retro Fixed</title>
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
-        body, html { 
-            height: 100%; 
-            width: 100%; 
-            background-color: #00001a; 
-            color: #00FF00; 
-            font-family: 'Courier New', Courier, monospace; 
-            overflow: hidden; 
-        }
-
-        /* Contenedor que ocupa el 100% de la pantalla */
-        .main-game-container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            padding: 12px;
-            max-width: 500px;
-            margin: 0 auto;
-            border-left: 1px solid #003300;
-            border-right: 1px solid #003300;
-        }
-
+        body, html { height: 100%; width: 100%; background-color: #00001a; color: #00FF00; font-family: 'Courier New', Courier, monospace; overflow: hidden; }
+        .main-game-container { height: 100vh; display: flex; flex-direction: column; padding: 12px; max-width: 500px; margin: 0 auto; }
         .retro-border { border: 2px solid #00FF00; box-shadow: 0 0 15px #00FF00; }
-        
-        /* Monitor CRT con encuadre perfecto */
-        .monitor-frame { 
-            flex: 1; /* Esto hace que el monitor use todo el espacio central disponible */
-            border: 4px solid #00FF00; 
-            background-color: #020b02; 
-            box-shadow: inset 0 0 30px #000, 0 0 15px rgba(0, 255, 0, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            border-radius: 12px;
-            position: relative;
-            margin: 10px 0;
-            overflow: hidden;
-        }
-
-        /* Líneas de escaneo CRT */
-        .monitor-frame::after {
-            content: " ";
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
-            background-size: 100% 4px;
-            z-index: 2;
-            pointer-events: none;
-        }
-
-        #progress-bar-fill { 
-            height: 100%; 
-            width: 0%; 
-            background-color: #00FF00; 
-            transition: width 0.5s cubic-bezier(0.23, 1, 0.32, 1); 
-            box-shadow: 0 0 20px #00FF00; 
-        }
-
-        /* Botones adaptados a móvil */
-        .opt-btn { 
-            border: 2px solid #00FF00; 
-            background: black; 
-            padding: 14px 10px;
-            font-size: 1rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            transition: 0.1s;
-            cursor: pointer;
-        }
-        
-        .opt-btn:active { 
-            background: #00FF00; 
-            color: black; 
-            transform: scale(0.98); 
-        }
-
-        .glow-text { text-shadow: 0 0 8px #00FF00; }
-        
-        /* Ajuste de vidas para que no se rompa en pantallas pequeñas */
-        #lives { letter-spacing: -2px; }
+        .monitor-frame { flex: 1; border: 4px solid #00FF00; background-color: #020b02; box-shadow: inset 0 0 30px #000; display: flex; align-items: center; justify-content: center; padding: 20px; border-radius: 12px; position: relative; margin: 10px 0; }
+        #progress-bar-fill { height: 100%; width: 0%; background-color: #00FF00; transition: width 0.4s ease-out; box-shadow: 0 0 20px #00FF00; }
+        .opt-btn { border: 2px solid #00FF00; background: black; padding: 14px 10px; font-size: 1.1rem; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; color: #00FF00; width: 100%; }
+        .opt-btn:active { background: #00FF00; color: black; }
+        .glow-text { text-shadow: 0 0 10px #00FF00; }
     </style>
 </head>
 <body>
 
     <div class="main-game-container">
-        
         <div class="flex justify-between items-center py-1">
-            <div id="game-score" class="text-lg font-bold glow-text">SC: 0000</div>
+            <div id="game-score" class="text-xl font-bold glow-text">PUNTOS: 0000</div>
             <div id="lives" class="text-red-500 text-2xl font-bold">❤❤❤❤❤</div>
         </div>
 
-        <div id="question-text" class="text-center text-sm font-bold uppercase border-y border-green-900 py-3 px-1 h-14 flex items-center justify-center text-green-400">
-            INICIALIZANDO SATÉLITE...
+        <div id="question-text" class="text-center text-sm font-bold uppercase border-y border-green-900 py-3 h-14 flex items-center justify-center text-green-400">
+            SISTEMA ONLINE
         </div>
 
         <div class="monitor-frame">
-            <img id="country-flag" src="" class="max-h-full max-w-full object-contain shadow-2xl" style="display: none;">
+            <img id="country-flag" src="" class="max-h-full max-w-full object-contain" style="display: none;">
         </div>
 
         <div class="flex flex-col mb-2" id="options-box">
@@ -118,9 +43,9 @@
         </div>
 
         <div class="pb-2">
-            <div class="flex justify-between text-[9px] text-green-500 mb-1 font-bold uppercase tracking-widest">
+            <div class="flex justify-between text-[10px] text-green-500 mb-1 font-bold">
                 <span>ESTADO DE CONQUISTA</span>
-                <span id="progress-stats">0 / 193</span>
+                <span id="progress-stats">0 / 0</span>
             </div>
             <div class="w-full bg-gray-900 h-4 border-2 border-green-500 p-[1px]">
                 <div id="progress-bar-fill"></div>
@@ -133,115 +58,51 @@
 from pyscript import window, document
 import random
 
-# 1. BASE DE DATOS (Incluye aquí tus 193 países siguiendo este formato)
+# BASE DE DATOS
 PAISES_DATA = {
     "España": ["Madrid", "Barcelona", "Valencia", "Sevilla", "es"],
     "Francia": ["París", "Marsella", "Lyon", "Toulouse", "fr"],
     "Italia": ["Roma", "Milán", "Nápoles", "Turín", "it"],
     "Alemania": ["Berlín", "Hamburgo", "Múnich", "Colonia", "de"],
-    "Reino Unido": ["Londres", "Manchester", "Birmingham", "Glasgow", "gb"],
-    "Portugal": ["Lisboa", "Oporto", "Braga", "Coimbra", "pt"],
-    "Grecia": ["Atenas", "Tesalónica", "Patras", "Heraclión", "gr"],
-    "Holanda": ["Ámsterdam", "Róterdam", "Utrecht", "Eindhoven", "nl"],
-    "Bélgica": ["Bruselas", "Amberes", "Gante", "Lieja", "be"],
-    "Suiza": ["Berna", "Zúrich", "Ginebra", "Basilea", "ch"],
-    "Austria": ["Viena", "Salzburgo", "Innsbruck", "Graz", "at"],
-    "Suecia": ["Estocolmo", "Gotemburgo", "Malmö", "Upsala", "se"],
-    "Noruega": ["Oslo", "Bergen", "Trondheim", "Stavanger", "no"],
-    "Dinamarca": ["Copenhague", "Aarhus", "Odense", "Aalborg", "dk"],
-    "Finlandia": ["Helsinki", "Espoo", "Tampere", "Vantaa", "fi"],
-    "Polonia": ["Varsovia", "Cracovia", "Łódź", "Breslavia", "pl"],
-    "Irlanda": ["Dublín", "Cork", "Galway", "Limerick", "ie"],
-    "Islandia": ["Reikiavik", "Akureyri", "Keflavík", "Hafnarfjörður", "is"],
-    "Rusia": ["Moscú", "San Petersburgo", "Novosibirsk", "Ekaterimburgo", "ru"],
-    "Turquía": ["Ankara", "Estambul", "Esmirna", "Bursa", "tr"],
-    "EUA": ["Washington D.C.", "Nueva York", "Los Ángeles", "Chicago", "us"],
-    "Canadá": ["Ottawa", "Toronto", "Montreal", "Vancouver", "ca"],
-    "México": ["CDMX", "Guadalajara", "Monterrey", "Puebla", "mx"],
-    "Guatemala": ["Ciudad de Guatemala", "Mixco", "Quetzaltenango", "Escuintla", "gt"],
-    "Honduras": ["Tegucigalpa", "San Pedro Sula", "Choloma", "La Ceiba", "hn"],
-    "El Salvador": ["San Salvador", "Santa Ana", "San Miguel", "Soyapango", "sv"],
-    "Nicaragua": ["Managua", "León", "Masaya", "Tipitapa", "ni"],
-    "Costa Rica": ["San José", "Alajuela", "Cartago", "Heredia", "cr"],
-    "Panamá": ["Ciudad de Panamá", "San Miguelito", "Tocumen", "David", "pa"],
-    "Cuba": ["La Habana", "Santiago de Cuba", "Camagüey", "Holguín", "cu"],
-    "Rep. Dominicana": ["Santo Domingo", "Santiago", "La Romana", "Puerto Plata", "do"],
-    "Colombia": ["Bogotá", "Medellín", "Cali", "Barranquilla", "co"],
-    "Venezuela": ["Caracas", "Maracaibo", "Valencia", "Barquisimeto", "ve"],
-    "Ecuador": ["Quito", "Guayaquil", "Cuenca", "Santo Domingo", "ec"],
-    "Perú": ["Lima", "Arequipa", "Trujillo", "Chiclayo", "pe"],
-    "Bolivia": ["Sucre", "Santa Cruz", "La Paz", "Cochabamba", "bo"],
-    "Chile": ["Santiago", "Valparaíso", "Concepción", "Antofagasta", "cl"],
-    "Argentina": ["Buenos Aires", "Córdoba", "Rosario", "Mendoza", "ar"],
-    "Uruguay": ["Montevideo", "Salto", "Ciudad de la Costa", "Paysandú", "uy"],
-    "Paraguay": ["Asunción", "Ciudad del Este", "San Lorenzo", "Luque", "py"],
-    "Brasil": ["Brasilia", "São Paulo", "Río de Janeiro", "Salvador", "br"],
-    "Egipto": ["El Cairo", "Alejandría", "Giza", "Suez", "eg"],
-    "Marruecos": ["Rabat", "Casablanca", "Fez", "Tánger", "ma"],
-    "Argelia": ["Argel", "Orán", "Constantina", "Annaba", "dz"],
-    "Túnez": ["Túnez", "Sfax", "Susa", "Kairuán", "tn"],
-    "Libia": ["Trípoli", "Bengasi", "Misrata", "Bayda", "ly"],
-    "Nigeria": ["Abuya", "Lagos", "Kano", "Ibadán", "ng"],
-    "Etiopía": ["Adís Abeba", "Dire Dawa", "Mekele", "Gondar", "et"],
-    "Sudáfrica": ["Pretoria", "Ciudad del Cabo", "Durban", "Johannesburgo", "za"],
-    "Kenia": ["Nairobi", "Mombasa", "Nakuru", "Kisumu", "ke"],
-    "Senegal": ["Dakar", "Touba", "Thiès", "Rufisque", "sn"],
-    "Ghana": ["Acra", "Kumasi", "Tamale", "Takoradi", "gh"],
-    "Costa de Marfil": ["Yamusukro", "Abiyán", "Bouaké", "Daloa", "ci"],
-    "Camerún": ["Yaundé", "Duala", "Garua", "Bamenda", "cm"],
-    "Angola": ["Luanda", "Huambo", "Lobito", "Benguela", "ao"],
-    "Tanzania": ["Dodoma", "Dar es Salaam", "Mwanza", "Arusha", "tz"],
-    "Uganda": ["Kampala", "Entebbe", "Jinja", "Mbarara", "ug"],
-    "Zimbabue": ["Harare", "Bulawayo", "Chitungwiza", "Mutare", "zw"],
-    "China": ["Pekín", "Shanghái", "Cantón", "Shenzhen", "cn"],
     "Japón": ["Tokio", "Osaka", "Kioto", "Yokohama", "jp"],
-    "Corea del Sur": ["Seúl", "Busán", "Incheon", "Daegu", "kr"],
-    "India": ["Nueva Delhi", "Bombay", "Calcuta", "Bangalore", "in"],
-    "Pakistán": ["Islamabad", "Karachi", "Lahore", "Faisalabad", "pk"],
-    "Bangladés": ["Daca", "Chittagong", "Khulna", "Rajshahi", "bd"],
-    "Indonesia": ["Yakarta", "Surabaya", "Bandung", "Medan", "id"],
-    "Filipinas": ["Manila", "Quezon City", "Davao", "Cebú", "ph"],
-    "Vietnam": ["Hanói", "Ciudad Ho Chi Minh", "Da Nang", "Haiphong", "vn"],
-    "Tailandia": ["Bangkok", "Nonthaburi", "Nakhon Ratchasima", "Chiang Mai", "th"],
-    "Malasia": ["Kuala Lumpur", "George Town", "Ipoh", "Shah Alam", "my"],
-    "Singapur": ["Singapur", "Bedok", "Jurong", "Tampines", "sg"],
-    "Irán": ["Teherán", "Mashhad", "Isfahán", "Tabriz", "ir"],
-    "Irak": ["Bagdad", "Basora", "Mosul", "Erbil", "iq"],
-    "Arabia Saudita": ["Riad", "Yeda", "La Meca", "Medina", "sa"],
-    "Emiratos Árabes": ["Abu Dabi", "Dubái", "Sharjah", "Al Ain", "ae"],
-    "Israel": ["Jerusalén", "Tel Aviv", "Haifa", "Rishon LeZion", "il"],
-    "Australia": ["Canberra", "Sídney", "Melbourne", "Brisbane", "au"],
-    "Nueva Zelanda": ["Wellington", "Auckland", "Christchurch", "Hamilton", "nz"],
-    "Fiyi": ["Suva", "Lautoka", "Nadi", "Labasa", "fj"],
-    # Puedes seguir extendiendo hasta los 186 manteniendo exactamente este formato
+    "México": ["CDMX", "Guadalajara", "Monterrey", "Puebla", "mx"],
+    "Brasil": ["Brasilia", "São Paulo", "Río de Janeiro", "Salvador", "br"],
+    "Argentina": ["Buenos Aires", "Córdoba", "Rosario", "Mendoza", "ar"]
+    # Agrega aquí los 193 países
 }
 
-# 2. VARIABLES DE ESTADO
+# VARIABLES DE ESTADO INICIALES
 score = 0
 lives = 5
 correct_ans = ""
 paises_restantes = list(PAISES_DATA.keys())
-total_meta = 193
+total_inicial = len(paises_restantes)
 aciertos = 0
 
-def actualizar_barra():
-    global aciertos
-    porcentaje = (aciertos / total_meta) * 100
+def actualizar_interfaz():
+    global score, aciertos, total_inicial
+    # 1. Actualizar Puntos
+    document.getElementById("game-score").innerText = f"PUNTOS: {score:04d}"
+    
+    # 2. Actualizar Barra y Texto de progreso
+    porcentaje = (aciertos / total_inicial * 100) if total_inicial > 0 else 0
     document.getElementById("progress-bar-fill").style.width = f"{porcentaje}%"
-    document.getElementById("progress-stats").innerText = f"{aciertos} / {total_meta}"
+    document.getElementById("progress-stats").innerText = f"{aciertos} / {total_inicial}"
 
 def nueva_ronda():
     global correct_ans, paises_restantes
-    if not paises_restantes or lives <= 0:
-        document.getElementById("question-text").innerText = "SISTEMA COMPLETADO"
-        return
     
+    if not paises_restantes or lives <= 0:
+        document.getElementById("question-text").innerText = "CONQUISTA FINALIZADA"
+        return
+
     pais = random.choice(paises_restantes)
     paises_restantes.remove(pais)
-    datos = PAISES_DATA[pais]
-    correct_ans = datos[0]
     
-    # Imagen con código ISO en minúscula
+    datos = PAISES_DATA[pais]
+    correct_ans = datos[0] # La capital correcta
+    
+    # Cargar Bandera
     iso = datos[4].lower()
     img = document.getElementById("country-flag")
     img.src = f"https://flagcdn.com/w640/{iso}.png"
@@ -249,33 +110,39 @@ def nueva_ronda():
     
     document.getElementById("question-text").innerText = f"¿CAPITAL DE {pais.upper()}?"
     
+    # Mezclar y asignar opciones
     opciones = datos[0:4]
     random.shuffle(opciones)
     for i in range(4):
-        document.getElementById(f"opt{i}").innerText = opciones[i]
+        btn = document.getElementById(f"opt{i}")
+        btn.innerText = opciones[i]
 
 def manejar_clic(evt):
-    global score, lives, aciertos
-    if evt.target.innerText == correct_ans:
+    global score, lives, aciertos, correct_ans
+    
+    # Extraemos el texto del botón y quitamos espacios extras
+    respuesta_usuario = evt.target.innerText.strip()
+    
+    if respuesta_usuario == correct_ans.strip():
         score += 50
         aciertos += 1
-        document.getElementById("game-score").innerText = f"SC: {score:04d}"
-        actualizar_barra()
+        actualizar_interfaz()
         nueva_ronda()
     else:
         lives -= 1
         document.getElementById("lives").innerText = "❤" * max(0, lives)
         if lives <= 0:
-            window.alert(f"CONEXIÓN PERDIDA. SCORE: {score}")
+            window.alert(f"MISION FALLIDA. PUNTOS: {score}")
             window.location.reload()
         else:
             nueva_ronda()
 
-# 3. VINCULACIÓN DE EVENTOS E INICIO
+# ASIGNAR EVENTOS
 for i in range(4):
     document.getElementById(f"opt{i}").onclick = manejar_clic
 
-actualizar_barra() # Empieza en 0
+# INICIO DEL JUEGO
+actualizar_interfaz()
 nueva_ronda()
         </script>
     </section>
