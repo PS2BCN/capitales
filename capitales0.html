@@ -11,33 +11,35 @@
         body { background-color: #00001a; color: #00FF00; font-family: 'Courier New', Courier, monospace; }
         .retro-border { border: 2px solid #00FF00; box-shadow: 0 0 15px #00FF00; }
         
-        /* MONITOR DE BANDERA: Encuadre perfecto */
-        .monitor-screen { 
+        /* MONITOR DE BANDERA: Encuadre Estilo Retro */
+        .monitor-frame { 
             border: 4px solid #00FF00; 
             background-color: #020b02; 
             box-shadow: inset 0 0 20px #000, 0 0 10px rgba(0, 255, 0, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 15px;
-            border-radius: 8px;
+            padding: 20px;
+            border-radius: 10px;
             position: relative;
         }
 
-        .monitor-screen::after {
+        /* Efecto de líneas de TV antigua */
+        .monitor-frame::after {
             content: "";
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 2px, 3px 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px;
             pointer-events: none;
+            border-radius: 6px;
         }
 
         #progress-bar-fill { 
             height: 100%; 
-            width: 0%; /* Empieza en 0 */
+            width: 0%; /* Empieza vacío */
             background-color: #00FF00; 
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
             box-shadow: 0 0 15px #00FF00; 
         }
 
@@ -56,13 +58,13 @@
         </div>
 
         <div class="flex justify-center mb-6">
-            <div class="monitor-screen w-full h-48">
-                <img id="country-flag" src="" class="max-h-full max-w-full shadow-md rounded-sm" style="display: none;">
+            <div class="monitor-frame w-full h-48">
+                <img id="country-flag" src="" class="max-h-full max-w-full shadow-md" style="display: none; border: 1px solid #004400;">
             </div>
         </div>
 
         <div id="question-text" class="text-center text-lg mb-6 min-h-[60px] flex items-center justify-center text-green-400 font-bold uppercase border-y border-green-900 py-4 px-2">
-            CONECTANDO...
+            INICIANDO SISTEMA...
         </div>
 
         <div class="grid grid-cols-1 gap-3" id="options-box">
@@ -88,155 +90,89 @@
             from pyscript import window, document
             import random
 
-                # --- BASE DE DATOS DE 186 PAÍSES ---
-# Estructura: "País": ["Capital", "Ciudad2", "Ciudad3", "Ciudad4", "ISO"]
-PAISES = {
-    "España": ["Madrid", "Barcelona", "Valencia", "Sevilla", "es"],
-    "Francia": ["París", "Marsella", "Lyon", "Toulouse", "fr"],
-    "Italia": ["Roma", "Milán", "Nápoles", "Turín", "it"],
-    "Alemania": ["Berlín", "Hamburgo", "Múnich", "Colonia", "de"],
-    "Reino Unido": ["Londres", "Manchester", "Birmingham", "Glasgow", "gb"],
-    "Portugal": ["Lisboa", "Oporto", "Braga", "Coimbra", "pt"],
-    "Grecia": ["Atenas", "Tesalónica", "Patras", "Heraclión", "gr"],
-    "Holanda": ["Ámsterdam", "Róterdam", "Utrecht", "Eindhoven", "nl"],
-    "Bélgica": ["Bruselas", "Amberes", "Gante", "Lieja", "be"],
-    "Suiza": ["Berna", "Zúrich", "Ginebra", "Basilea", "ch"],
-    "Austria": ["Viena", "Salzburgo", "Innsbruck", "Graz", "at"],
-    "Suecia": ["Estocolmo", "Gotemburgo", "Malmö", "Upsala", "se"],
-    "Noruega": ["Oslo", "Bergen", "Trondheim", "Stavanger", "no"],
-    "Dinamarca": ["Copenhague", "Aarhus", "Odense", "Aalborg", "dk"],
-    "Finlandia": ["Helsinki", "Espoo", "Tampere", "Vantaa", "fi"],
-    "Polonia": ["Varsovia", "Cracovia", "Łódź", "Breslavia", "pl"],
-    "Irlanda": ["Dublín", "Cork", "Galway", "Limerick", "ie"],
-    "Islandia": ["Reikiavik", "Akureyri", "Keflavík", "Hafnarfjörður", "is"],
-    "Rusia": ["Moscú", "San Petersburgo", "Novosibirsk", "Ekaterimburgo", "ru"],
-    "Turquía": ["Ankara", "Estambul", "Esmirna", "Bursa", "tr"],
-    "EUA": ["Washington D.C.", "Nueva York", "Los Ángeles", "Chicago", "us"],
-    "Canadá": ["Ottawa", "Toronto", "Montreal", "Vancouver", "ca"],
-    "México": ["CDMX", "Guadalajara", "Monterrey", "Puebla", "mx"],
-    "Guatemala": ["Ciudad de Guatemala", "Mixco", "Quetzaltenango", "Escuintla", "gt"],
-    "Honduras": ["Tegucigalpa", "San Pedro Sula", "Choloma", "La Ceiba", "hn"],
-    "El Salvador": ["San Salvador", "Santa Ana", "San Miguel", "Soyapango", "sv"],
-    "Nicaragua": ["Managua", "León", "Masaya", "Tipitapa", "ni"],
-    "Costa Rica": ["San José", "Alajuela", "Cartago", "Heredia", "cr"],
-    "Panamá": ["Ciudad de Panamá", "San Miguelito", "Tocumen", "David", "pa"],
-    "Cuba": ["La Habana", "Santiago de Cuba", "Camagüey", "Holguín", "cu"],
-    "Rep. Dominicana": ["Santo Domingo", "Santiago", "La Romana", "Puerto Plata", "do"],
-    "Colombia": ["Bogotá", "Medellín", "Cali", "Barranquilla", "co"],
-    "Venezuela": ["Caracas", "Maracaibo", "Valencia", "Barquisimeto", "ve"],
-    "Ecuador": ["Quito", "Guayaquil", "Cuenca", "Santo Domingo", "ec"],
-    "Perú": ["Lima", "Arequipa", "Trujillo", "Chiclayo", "pe"],
-    "Bolivia": ["Sucre", "Santa Cruz", "La Paz", "Cochabamba", "bo"],
-    "Chile": ["Santiago", "Valparaíso", "Concepción", "Antofagasta", "cl"],
-    "Argentina": ["Buenos Aires", "Córdoba", "Rosario", "Mendoza", "ar"],
-    "Uruguay": ["Montevideo", "Salto", "Ciudad de la Costa", "Paysandú", "uy"],
-    "Paraguay": ["Asunción", "Ciudad del Este", "San Lorenzo", "Luque", "py"],
-    "Brasil": ["Brasilia", "São Paulo", "Río de Janeiro", "Salvador", "br"],
-    "Egipto": ["El Cairo", "Alejandría", "Giza", "Suez", "eg"],
-    "Marruecos": ["Rabat", "Casablanca", "Fez", "Tánger", "ma"],
-    "Argelia": ["Argel", "Orán", "Constantina", "Annaba", "dz"],
-    "Túnez": ["Túnez", "Sfax", "Susa", "Kairuán", "tn"],
-    "Libia": ["Trípoli", "Bengasi", "Misrata", "Bayda", "ly"],
-    "Nigeria": ["Abuya", "Lagos", "Kano", "Ibadán", "ng"],
-    "Etiopía": ["Adís Abeba", "Dire Dawa", "Mekele", "Gondar", "et"],
-    "Sudáfrica": ["Pretoria", "Ciudad del Cabo", "Durban", "Johannesburgo", "za"],
-    "Kenia": ["Nairobi", "Mombasa", "Nakuru", "Kisumu", "ke"],
-    "Senegal": ["Dakar", "Touba", "Thiès", "Rufisque", "sn"],
-    "Ghana": ["Acra", "Kumasi", "Tamale", "Takoradi", "gh"],
-    "Costa de Marfil": ["Yamusukro", "Abiyán", "Bouaké", "Daloa", "ci"],
-    "Camerún": ["Yaundé", "Duala", "Garua", "Bamenda", "cm"],
-    "Angola": ["Luanda", "Huambo", "Lobito", "Benguela", "ao"],
-    "Tanzania": ["Dodoma", "Dar es Salaam", "Mwanza", "Arusha", "tz"],
-    "Uganda": ["Kampala", "Entebbe", "Jinja", "Mbarara", "ug"],
-    "Zimbabue": ["Harare", "Bulawayo", "Chitungwiza", "Mutare", "zw"],
-    "China": ["Pekín", "Shanghái", "Cantón", "Shenzhen", "cn"],
-    "Japón": ["Tokio", "Osaka", "Kioto", "Yokohama", "jp"],
-    "Corea del Sur": ["Seúl", "Busán", "Incheon", "Daegu", "kr"],
-    "India": ["Nueva Delhi", "Bombay", "Calcuta", "Bangalore", "in"],
-    "Pakistán": ["Islamabad", "Karachi", "Lahore", "Faisalabad", "pk"],
-    "Bangladés": ["Daca", "Chittagong", "Khulna", "Rajshahi", "bd"],
-    "Indonesia": ["Yakarta", "Surabaya", "Bandung", "Medan", "id"],
-    "Filipinas": ["Manila", "Quezon City", "Davao", "Cebú", "ph"],
-    "Vietnam": ["Hanói", "Ciudad Ho Chi Minh", "Da Nang", "Haiphong", "vn"],
-    "Tailandia": ["Bangkok", "Nonthaburi", "Nakhon Ratchasima", "Chiang Mai", "th"],
-    "Malasia": ["Kuala Lumpur", "George Town", "Ipoh", "Shah Alam", "my"],
-    "Singapur": ["Singapur", "Bedok", "Jurong", "Tampines", "sg"],
-    "Irán": ["Teherán", "Mashhad", "Isfahán", "Tabriz", "ir"],
-    "Irak": ["Bagdad", "Basora", "Mosul", "Erbil", "iq"],
-    "Arabia Saudita": ["Riad", "Yeda", "La Meca", "Medina", "sa"],
-    "Emiratos Árabes": ["Abu Dabi", "Dubái", "Sharjah", "Al Ain", "ae"],
-    "Israel": ["Jerusalén", "Tel Aviv", "Haifa", "Rishon LeZion", "il"],
-    "Australia": ["Canberra", "Sídney", "Melbourne", "Brisbane", "au"],
-    "Nueva Zelanda": ["Wellington", "Auckland", "Christchurch", "Hamilton", "nz"],
-    "Fiyi": ["Suva", "Lautoka", "Nadi", "Labasa", "fj"],
-    # Puedes seguir extendiendo hasta los 186 manteniendo exactamente este formato
-}
+            # BASE DE DATOS
+            PAISES_DATA = {
+                "España": ["Madrid", "Barcelona", "Valencia", "Sevilla", "es"],
+                "Francia": ["París", "Marsella", "Lyon", "Toulouse", "fr"],
+                "Italia": ["Roma", "Milán", "Nápoles", "Turín", "it"],
+                "Alemania": ["Berlín", "Hamburgo", "Múnich", "Colonia", "de"],
+                "Japón": ["Tokio", "Osaka", "Kioto", "Yokohama", "jp"],
+                "México": ["CDMX", "Guadalajara", "Monterrey", "Puebla", "mx"],
+                "Brasil": ["Brasilia", "São Paulo", "Río de Janeiro", "Salvador", "br"],
+                "Argentina": ["Buenos Aires", "Córdoba", "Rosario", "Mendoza", "ar"],
+                "Canadá": ["Ottawa", "Toronto", "Montreal", "Vancouver", "ca"],
+                "Australia": ["Canberra", "Sídney", "Melbourne", "Perth", "au"],
+                "Portugal": ["Lisboa", "Oporto", "Braga", "Coimbra", "pt"]
+                # Aquí puedes seguir pegando tu lista de 186 países
+            }
 
+            # VARIABLES DE JUEGO
             score = 0
             lives = 5
             correct_ans = ""
             paises_restantes = list(PAISES_DATA.keys())
             total_meta = 186
-            aciertos = 0
+            aciertos_globales = 0
 
-            def update_progress():
-                global aciertos
-                pct = (aciertos / total_meta) * 100
-                document.getElementById("progress-bar-fill").style.width = f"{pct}%"
-                document.getElementById("progress-stats").innerText = f"{aciertos} / {total_meta}"
+            def actualizar_progreso():
+                global aciertos_globales
+                porcentaje = (aciertos_globales / total_meta) * 100
+                document.getElementById("progress-bar-fill").style.width = f"{porcentaje}%"
+                document.getElementById("progress-stats").innerText = f"{aciertos_globales} / {total_meta}"
 
-            def new_round():
+            def siguiente_pregunta():
                 global correct_ans, paises_restantes
                 
                 if not paises_restantes or lives <= 0:
-                    document.getElementById("question-text").innerText = "SISTEMA COMPLETADO"
+                    document.getElementById("question-text").innerText = "MISIÓN COMPLETADA"
                     return
 
-                pais = random.choice(paises_restantes)
-                paises_restantes.remove(pais)
+                # Selección sin repetición
+                pais_seleccionado = random.choice(paises_restantes)
+                paises_restantes.remove(pais_seleccionado)
 
-                datos = PAISES_DATA[pais]
+                datos = PAISES_DATA[pais_seleccionado]
                 correct_ans = datos[0]
                 
-                # Imagen de bandera
-                iso = datos[4].lower()
-                img = document.getElementById("country-flag")
-                img.src = f"https://flagcdn.com/w640/{iso}.png"
-                img.style.display = "block"
+                # Cargar Bandera
+                codigo_iso = datos[4].lower()
+                img_element = document.getElementById("country-flag")
+                img_element.src = f"https://flagcdn.com/w640/{codigo_iso}.png"
+                img_element.style.display = "block"
 
-                document.getElementById("question-text").innerText = f"¿CAPITAL DE {pais.upper()}?"
+                document.getElementById("question-text").innerText = f"¿CAPITAL DE {pais_seleccionado.upper()}?"
                 
                 opciones = datos[0:4]
                 random.shuffle(opciones)
                 
                 for i in range(4):
-                    btn = document.getElementById(f"opt{i}")
-                    btn.innerText = opciones[i]
+                    boton = document.getElementById(f"opt{i}")
+                    boton.innerText = opciones[i]
 
-            def check_click(evt):
-                global score, lives, aciertos
+            def al_hacer_clic(evt):
+                global score, lives, aciertos_globales
                 if evt.target.innerText == correct_ans:
                     score += 50
-                    aciertos += 1
+                    aciertos_globales += 1
                     document.getElementById("game-score").innerText = f"SCORE: {score:04d}"
-                    update_progress()
-                    new_round()
+                    actualizar_progreso()
+                    siguiente_pregunta()
                 else:
                     lives -= 1
                     document.getElementById("lives").innerText = "❤" * max(0, lives)
                     if lives <= 0:
-                        window.alert(f"SISTEMA CAÍDO. PUNTOS: {score}")
+                        window.alert(f"SISTEMA CAÍDO. SCORE FINAL: {score}")
                         window.location.reload()
                     else:
-                        new_round()
+                        siguiente_pregunta()
 
-            # Eventos
+            # Configuración de Eventos
             for i in range(4):
-                document.getElementById(f"opt{i}").onclick = check_click
+                document.getElementById(f"opt{i}").onclick = al_hacer_clic
 
-            # Inicialización
-            update_progress() # Esto asegura que empiece en 0
-            new_round()
+            # Inicio del Juego
+            actualizar_progreso() # Asegura que la barra empiece en 0
+            siguiente_pregunta()
         </script>
     </section>
 </body>
