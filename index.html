@@ -133,8 +133,11 @@
         <a href="fronteras0.html" class="card"><div class="icon">🗺️</div>Fronteras Easy</a>
         <a href="fronteras1.html" class="card"><div class="icon">🗺️</div>Fronteras Medium</a>
         <a href="fronteras2.html" class="card"><div class="icon">🗺️</div>Fronteras Extreme</a>
-        <a href="ip.html" class="card"><div class="icon">💲</div>Calculadora IP</a>
+        <a href="banderas.html" class="card"><div class="icon">🚩</div>Banderas Easy</a>
+        <a href="banderas2.html" class="card"><div class="icon">🚩</div>Banderas Medium</a>
+        <a href="banderas3.html" class="card"><div class="icon">🚩</div>Banderas Extreme</a>
         
+        <a href="ip.html" class="card"><div class="icon">💲</div>Calculadora IP</a>
     </div>
 
     <div class="music-player">
@@ -210,16 +213,12 @@
             audio.currentTime = time;
         }
 
-        // Actualizar barra de progreso
         audio.ontimeupdate = () => {
             const progress = (audio.currentTime / audio.duration) * 100;
             progressBar.value = progress || 0;
         };
 
-        // Pasar a la siguiente automáticamente
         audio.onended = nextSong;
-
-        // Cargar primera canción al iniciar
         loadSong(currentSongIndex);
     </script>
 </body>
