@@ -8,43 +8,43 @@
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #00001a; color: #00FF00; font-family: 'Courier New', Courier, monospace; }
+        body { background-color: #00001a; color: #00FF00; font-family: 'Courier New', Courier, monospace; overflow-x: hidden; }
         .retro-border { border: 2px solid #00FF00; box-shadow: 0 0 15px #00FF00; }
         
         /* MONITOR DE BANDERA: Encuadre Estilo Retro */
         .monitor-frame { 
             border: 4px solid #00FF00; 
             background-color: #020b02; 
-            box-shadow: inset 0 0 20px #000, 0 0 10px rgba(0, 255, 0, 0.5);
+            box-shadow: inset 0 0 30px #000, 0 0 15px rgba(0, 255, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
-            border-radius: 10px;
+            padding: 25px;
+            border-radius: 12px;
             position: relative;
         }
 
-        /* Efecto de líneas de TV antigua */
+        /* Líneas de escaneo CRT */
         .monitor-frame::after {
-            content: "";
+            content: " ";
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
             background-size: 100% 4px;
+            z-index: 2;
             pointer-events: none;
-            border-radius: 6px;
         }
 
         #progress-bar-fill { 
             height: 100%; 
-            width: 0%; /* Empieza vacío */
+            width: 0%; 
             background-color: #00FF00; 
-            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
-            box-shadow: 0 0 15px #00FF00; 
+            transition: width 0.6s cubic-bezier(0.23, 1, 0.32, 1); 
+            box-shadow: 0 0 20px #00FF00; 
         }
 
         button { border: 1px solid #00FF00; background: black; transition: all 0.2s; text-transform: uppercase; font-weight: bold; }
-        button:hover { background: #00FF00; color: black; box-shadow: 0 0 15px #00FF00; transform: translateY(-2px); }
+        button:hover { background: #00FF00; color: black; box-shadow: 0 0 15px #00FF00; }
         .glow-text { text-shadow: 0 0 8px #00FF00; }
     </style>
 </head>
@@ -53,18 +53,18 @@
     <div class="w-full max-w-md bg-black p-6 retro-border rounded-lg mt-6">
         
         <div class="flex justify-between items-center mb-6">
-            <div id="game-score" class="text-xl font-bold glow-text">SCORE: 0000</div>
+            <div id="game-score" class="text-xl font-bold glow-text">PUNTOS: 0000</div>
             <div id="lives" class="text-red-500 text-xl tracking-tighter font-bold">❤❤❤❤❤</div>
         </div>
 
         <div class="flex justify-center mb-6">
-            <div class="monitor-frame w-full h-48">
-                <img id="country-flag" src="" class="max-h-full max-w-full shadow-md" style="display: none; border: 1px solid #004400;">
+            <div class="monitor-frame w-full h-52">
+                <img id="country-flag" src="" class="max-h-full max-w-full" style="display: none;">
             </div>
         </div>
 
         <div id="question-text" class="text-center text-lg mb-6 min-h-[60px] flex items-center justify-center text-green-400 font-bold uppercase border-y border-green-900 py-4 px-2">
-            INICIANDO SISTEMA...
+            INICIALIZANDO...
         </div>
 
         <div class="grid grid-cols-1 gap-3" id="options-box">
@@ -74,9 +74,9 @@
             <button id="opt3" class="py-4 text-lg">-</button>
         </div>
 
-        <div class="mt-8">
+        <div class="mt-10">
             <div class="flex justify-between text-[10px] text-green-500 mb-2 font-bold uppercase tracking-widest">
-                <span>CONQUISTA GLOBAL</span>
+                <span>ESTADO DE CONQUISTA</span>
                 <span id="progress-stats">0 / 186</span>
             </div>
             <div class="w-full bg-gray-900 h-6 border-2 border-green-500 p-[2px]">
@@ -87,92 +87,83 @@
 
     <section class="pyscript">
         <script type="py">
-            from pyscript import window, document
-            import random
+from pyscript import window, document
+import random
 
-            # BASE DE DATOS
-            PAISES_DATA = {
-                "España": ["Madrid", "Barcelona", "Valencia", "Sevilla", "es"],
-                "Francia": ["París", "Marsella", "Lyon", "Toulouse", "fr"],
-                "Italia": ["Roma", "Milán", "Nápoles", "Turín", "it"],
-                "Alemania": ["Berlín", "Hamburgo", "Múnich", "Colonia", "de"],
-                "Japón": ["Tokio", "Osaka", "Kioto", "Yokohama", "jp"],
-                "México": ["CDMX", "Guadalajara", "Monterrey", "Puebla", "mx"],
-                "Brasil": ["Brasilia", "São Paulo", "Río de Janeiro", "Salvador", "br"],
-                "Argentina": ["Buenos Aires", "Córdoba", "Rosario", "Mendoza", "ar"],
-                "Canadá": ["Ottawa", "Toronto", "Montreal", "Vancouver", "ca"],
-                "Australia": ["Canberra", "Sídney", "Melbourne", "Perth", "au"],
-                "Portugal": ["Lisboa", "Oporto", "Braga", "Coimbra", "pt"]
-                # Aquí puedes seguir pegando tu lista de 186 países
-            }
+# 1. BASE DE DATOS (Alineada a la izquierda)
+PAISES_DATA = {
+    "España": ["Madrid", "Barcelona", "Valencia", "Sevilla", "es"],
+    "Francia": ["París", "Marsella", "Lyon", "Toulouse", "fr"],
+    "Italia": ["Roma", "Milán", "Nápoles", "Turín", "it"],
+    "Alemania": ["Berlín", "Hamburgo", "Múnich", "Colonia", "de"],
+    "Japón": ["Tokio", "Osaka", "Kioto", "Yokohama", "jp"],
+    "México": ["CDMX", "Guadalajara", "Monterrey", "Puebla", "mx"],
+    "Brasil": ["Brasilia", "São Paulo", "Río de Janeiro", "Salvador", "br"],
+    "Argentina": ["Buenos Aires", "Córdoba", "Rosario", "Mendoza", "ar"],
+    "Canadá": ["Ottawa", "Toronto", "Montreal", "Vancouver", "ca"],
+    "Australia": ["Canberra", "Sídney", "Melbourne", "Perth", "au"]
+}
 
-            # VARIABLES DE JUEGO
-            score = 0
-            lives = 5
-            correct_ans = ""
-            paises_restantes = list(PAISES_DATA.keys())
-            total_meta = 186
-            aciertos_globales = 0
+# 2. VARIABLES GLOBALES
+score = 0
+lives = 5
+correct_ans = ""
+paises_restantes = list(PAISES_DATA.keys())
+total_meta = 186
+aciertos = 0
 
-            def actualizar_progreso():
-                global aciertos_globales
-                porcentaje = (aciertos_globales / total_meta) * 100
-                document.getElementById("progress-bar-fill").style.width = f"{porcentaje}%"
-                document.getElementById("progress-stats").innerText = f"{aciertos_globales} / {total_meta}"
+def actualizar_barra():
+    global aciertos
+    porcentaje = (aciertos / total_meta) * 100
+    document.getElementById("progress-bar-fill").style.width = f"{porcentaje}%"
+    document.getElementById("progress-stats").innerText = f"{aciertos} / {total_meta}"
 
-            def siguiente_pregunta():
-                global correct_ans, paises_restantes
-                
-                if not paises_restantes or lives <= 0:
-                    document.getElementById("question-text").innerText = "MISIÓN COMPLETADA"
-                    return
+def nueva_pregunta():
+    global correct_ans, paises_restantes
+    if not paises_restantes or lives <= 0:
+        document.getElementById("question-text").innerText = "MISIÓN COMPLETADA"
+        return
+    
+    pais = random.choice(paises_restantes)
+    paises_restantes.remove(pais)
+    datos = PAISES_DATA[pais]
+    correct_ans = datos[0]
+    
+    iso = datos[4].lower()
+    img = document.getElementById("country-flag")
+    img.src = f"https://flagcdn.com/w640/{iso}.png"
+    img.style.display = "block"
+    
+    document.getElementById("question-text").innerText = f"¿CAPITAL DE {pais.upper()}?"
+    
+    opciones = datos[0:4]
+    random.shuffle(opciones)
+    for i in range(4):
+        document.getElementById(f"opt{i}").innerText = opciones[i]
 
-                # Selección sin repetición
-                pais_seleccionado = random.choice(paises_restantes)
-                paises_restantes.remove(pais_seleccionado)
+def manejar_click(evt):
+    global score, lives, aciertos
+    if evt.target.innerText == correct_ans:
+        score += 50
+        aciertos += 1
+        document.getElementById("game-score").innerText = f"PUNTOS: {score:04d}"
+        actualizar_barra()
+        nueva_pregunta()
+    else:
+        lives -= 1
+        document.getElementById("lives").innerText = "❤" * max(0, lives)
+        if lives <= 0:
+            window.alert("SISTEMA CAÍDO")
+            window.location.reload()
+        else:
+            nueva_pregunta()
 
-                datos = PAISES_DATA[pais_seleccionado]
-                correct_ans = datos[0]
-                
-                # Cargar Bandera
-                codigo_iso = datos[4].lower()
-                img_element = document.getElementById("country-flag")
-                img_element.src = f"https://flagcdn.com/w640/{codigo_iso}.png"
-                img_element.style.display = "block"
+# 3. INICIALIZACIÓN
+for i in range(4):
+    document.getElementById(f"opt{i}").onclick = manejar_click
 
-                document.getElementById("question-text").innerText = f"¿CAPITAL DE {pais_seleccionado.upper()}?"
-                
-                opciones = datos[0:4]
-                random.shuffle(opciones)
-                
-                for i in range(4):
-                    boton = document.getElementById(f"opt{i}")
-                    boton.innerText = opciones[i]
-
-            def al_hacer_clic(evt):
-                global score, lives, aciertos_globales
-                if evt.target.innerText == correct_ans:
-                    score += 50
-                    aciertos_globales += 1
-                    document.getElementById("game-score").innerText = f"SCORE: {score:04d}"
-                    actualizar_progreso()
-                    siguiente_pregunta()
-                else:
-                    lives -= 1
-                    document.getElementById("lives").innerText = "❤" * max(0, lives)
-                    if lives <= 0:
-                        window.alert(f"SISTEMA CAÍDO. SCORE FINAL: {score}")
-                        window.location.reload()
-                    else:
-                        siguiente_pregunta()
-
-            # Configuración de Eventos
-            for i in range(4):
-                document.getElementById(f"opt{i}").onclick = al_hacer_clic
-
-            # Inicio del Juego
-            actualizar_progreso() # Asegura que la barra empiece en 0
-            siguiente_pregunta()
+actualizar_barra()
+nueva_pregunta()
         </script>
     </section>
 </body>
