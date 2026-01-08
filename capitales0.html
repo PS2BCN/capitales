@@ -10,19 +10,18 @@
     <style>
         body { background-color: #00001a; color: #00FF00; font-family: 'Courier New', Courier, monospace; }
         .retro-border { border: 2px solid #00FF00; box-shadow: 0 0 15px #00FF00; }
-        .flag-shadow { filter: drop-shadow(0 0 10px #00FF00); border: 2px solid #00FF00; }
+        .flag-shadow { filter: drop-shadow(0 0 12px #00FF00); border: 2px solid #00FF00; background-color: #111; }
         
-        /* Barra de Progreso (Verde Neón) */
         #progress-bar-fill { 
             height: 100%; 
             width: 0%; 
             background-color: #00FF00; 
-            transition: width 0.5s ease-in-out; 
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); 
             box-shadow: 0 0 20px #00FF00; 
         }
 
         button { border: 1px solid #00FF00; background: black; transition: all 0.2s; text-transform: uppercase; }
-        button:hover { background: #00FF00; color: black; box-shadow: 0 0 10px #00FF00; }
+        button:hover { background: #00FF00; color: black; box-shadow: 0 0 15px #00FF00; }
         .glow-text { text-shadow: 0 0 5px #00FF00; }
     </style>
 </head>
@@ -31,39 +30,37 @@
     <div class="w-full max-w-md bg-black p-6 retro-border rounded-lg mt-6">
         
         <div class="flex justify-between items-center mb-6">
-            <div id="bcn-clock" class="text-lg text-yellow-400 font-bold glow-text">BARCELONA: --:--:--</div>
-            <div id="lives" class="text-red-500 text-xl tracking-tighter">❤❤❤❤❤</div>
+            <div id="bcn-clock" class="text-lg text-yellow-400 font-bold glow-text">BCN: --:--:--</div>
+            <div id="lives" class="text-red-500 text-xl tracking-tighter font-bold">❤❤❤❤❤</div>
         </div>
 
-        <div class="flex justify-center mb-8">
-            <div class="p-2 bg-green-900/20 rounded">
-                <img id="country-flag" src="" class="h-32 flag-shadow block mx-auto">
-            </div>
+        <div class="flex justify-center mb-8 h-40 items-center">
+            <img id="country-flag" src="" class="h-32 flag-shadow hidden">
         </div>
 
-        <div id="question-text" class="text-center text-xl mb-6 min-h-[60px] flex items-center justify-center text-green-400 font-bold uppercase border-y border-green-900 py-4">
-            IDENTIFICANDO TERRITORIO...
+        <div id="question-text" class="text-center text-xl mb-6 min-h-[70px] flex items-center justify-center text-green-400 font-bold uppercase border-y border-green-900 py-4 px-2">
+            CONECTANDO CON SATÉLITE...
         </div>
 
         <div class="grid grid-cols-1 gap-3" id="options-box">
-            <button id="opt0" class="py-4 text-lg">-</button>
-            <button id="opt1" class="py-4 text-lg">-</button>
-            <button id="opt2" class="py-4 text-lg">-</button>
-            <button id="opt3" class="py-4 text-lg">-</button>
+            <button id="opt0" class="py-4 text-lg font-bold">-</button>
+            <button id="opt1" class="py-4 text-lg font-bold">-</button>
+            <button id="opt2" class="py-4 text-lg font-bold">-</button>
+            <button id="opt3" class="py-4 text-lg font-bold">-</button>
         </div>
 
         <div class="mt-10">
             <div class="flex justify-between text-[10px] text-green-500 mb-2 font-bold uppercase tracking-widest">
-                <span>Conquista Global</span>
+                <span>CONQUISTA GLOBAL</span>
                 <span id="progress-stats">0 / 186</span>
             </div>
-            <div class="w-full bg-gray-900 h-6 border-2 border-green-500 p-[2px]">
+            <div class="w-full bg-gray-900 h-6 border-2 border-green-500 p-[1px]">
                 <div id="progress-bar-fill"></div>
             </div>
         </div>
 
         <div class="mt-4 text-center">
-            <div id="game-score" class="text-xl glow-text">PUNTOS: 0000</div>
+            <div id="game-score" class="text-xl glow-text font-bold">PUNTOS: 0000</div>
         </div>
     </div>
 
@@ -72,8 +69,7 @@
             import random
             from pyscript import window, document
 
-            # Base de datos (asegúrate de que el último elemento sea el código ISO para la bandera)
-              # --- BASE DE DATOS DE 186 PAÍSES ---
+         # --- BASE DE DATOS DE 186 PAÍSES ---
 # Estructura: "País": ["Capital", "Ciudad2", "Ciudad3", "Ciudad4", "ISO"]
 PAISES = {
     "España": ["Madrid", "Barcelona", "Valencia", "Sevilla", "es"],
@@ -157,48 +153,45 @@ PAISES = {
     # Puedes seguir extendiendo hasta los 186 manteniendo exactamente este formato
 }
 
-            # Estado del juego
+            # Variables globales
             score = 0
             lives = 5
             correct_ans = ""
             paises_restantes = list(PAISES_DATA.keys())
-            total_inicial = len(PAISES_DATA) # Esto debería ser 186
+            total_paises = 186 
 
             def get_bcn_time():
-                # Obtiene la hora de Barcelona/Madrid mediante JS para asegurar precisión
                 options = {"timeZone": "Europe/Madrid", "hour": "2-digit", "minute": "2-digit", "second": "2-digit", "hour12": False}
                 formatter = window.Intl.DateTimeFormat.new("es-ES", options)
-                now = window.Date.new()
-                document.getElementById("bcn-clock").innerText = f"BARCELONA: {formatter.format(now)}"
+                document.getElementById("bcn-clock").innerText = f"BCN: {formatter.format(window.Date.new())}"
 
-            def update_progress():
-                aciertos = total_inicial - len(paises_restantes)
-                pct = (aciertos / 186) * 100
+            def update_ui():
+                aciertos = total_paises - len(paises_restantes)
+                pct = (aciertos / total_paises) * 100
                 document.getElementById("progress-bar-fill").style.width = f"{pct}%"
-                document.getElementById("progress-stats").innerText = f"{aciertos} / 186"
+                document.getElementById("progress-stats").innerText = f"{aciertos} / {total_paises}"
 
-            def new_round():
+            def next_question():
                 global correct_ans, paises_restantes
                 
                 if not paises_restantes or lives <= 0:
-                    document.getElementById("question-text").innerText = "¡MISIÓN COMPLETADA!"
+                    document.getElementById("question-text").innerText = "¡MISIÓN FINALIZADA!"
                     return
 
-                # Selección sin repetir
-                pais_actual = random.choice(paises_restantes)
-                paises_restantes.remove(pais_actual) # Lo quitamos para no repetir
+                pais = random.choice(paises_restantes)
+                paises_restantes.remove(pais)
 
-                datos = PAISES_DATA[pais_actual]
+                datos = PAISES_DATA[pais]
                 correct_ans = datos[0]
                 
-                # Actualizar Bandera
-                iso_code = datos[4]
-                flag_img = document.getElementById("country-flag")
-                flag_img.src = f"https://flagcdn.com/w320/{iso_code}.png"
+                # Bandera: Forzamos minúsculas y mostramos
+                iso = datos[4].lower()
+                img = document.getElementById("country-flag")
+                img.src = f"https://flagcdn.com/w320/{iso}.png"
+                img.classList.remove("hidden")
 
-                document.getElementById("question-text").innerText = f"¿CAPITAL DE {pais_actual.upper()}?"
+                document.getElementById("question-text").innerText = f"¿CAPITAL DE {pais.upper()}?"
                 
-                # Opciones (las 4 ciudades del país barajadas)
                 opciones = datos[0:4]
                 random.shuffle(opciones)
                 
@@ -206,29 +199,29 @@ PAISES = {
                     btn = document.getElementById(f"opt{i}")
                     btn.innerText = opciones[i]
 
-            def check_answer(evt):
+            def check_click(evt):
                 global score, lives
                 if evt.target.innerText == correct_ans:
                     score += 50
                     document.getElementById("game-score").innerText = f"PUNTOS: {score:04d}"
-                    update_progress()
-                    new_round()
+                    update_ui()
+                    next_question()
                 else:
                     lives -= 1
-                    document.getElementById("lives").innerText = "❤" * lives
+                    document.getElementById("lives").innerText = "❤" * max(0, lives)
                     if lives <= 0:
-                        window.alert(f"SISTEMA CAÍDO. Puntos finales: {score}")
+                        window.alert(f"SISTEMA CRASHED. SCORE: {score}")
                         window.location.reload()
                     else:
-                        new_round()
+                        next_question()
 
-            # Iniciar Reloj e Interfaz
+            # Configuración de botones e inicio
             for i in range(4):
-                document.getElementById(f"opt{i}").onclick = check_answer
+                document.getElementById(f"opt{i}").onclick = check_click
 
             window.setInterval(get_bcn_time, 1000)
-            update_progress()
-            new_round()
+            update_ui()
+            next_question()
         </script>
     </section>
 </body>
