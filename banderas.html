@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reto Mundial: 5 Vidas</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; padding-top: 20px; background-color: #f0f2f5; }
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); width: 450px; text-align: center; position: relative; }
+        
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .continent-tag { background: #34495e; color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; }
+        .lives { color: #e74c3c; font-size: 1.2rem; font-weight: bold; }
+        
+        .flag-img { width: 120px; height: auto; border-radius: 8px; margin: 10px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border: 1px solid #eee; }
+        
+        h2 { color: #2c3e50; margin: 5px 0; font-size: 1.5rem; }
+        .question-box { background: #e9ecef; padding: 15px; border-radius: 8px; margin: 15px 0; font-size: 1.4rem; font-weight: bold; color: #2c3e50; }
+        
+        input[type="text"] { width: 85%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 8px; font-size: 1.1rem; text-align: center; }
+        input[type="text"]:focus { border-color: #3498db; outline: none; }
+        
+        .btn-main { background: #3498db; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; width: 100%; font-size: 1rem; font-weight: bold; transition: 0.3s; }
+        .btn-main:hover { background: #2980b9; }
+        .btn-main:disabled { background: #bdc3c7; cursor: not-allowed; }
+
+        #feedback { margin-top: 15px; min-height: 55px; font-weight: bold; border-radius: 8px; padding: 10px; display: none; }
+        .correct { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .incorrect { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .solution { display: block; font-size: 0.85em; margin-top: 5px; font-weight: normal; }
+
+        #game-over { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); border-radius: 15px; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
+        .restart-btn { background: #2c3e50; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="game-over">
+        <h1 style="color: #c0392b;">¡JUEGO TERMINADO!</h1>
+        <p id="final-score"></p>
+        <button class="restart-btn" onclick="resetGame()">Intentar de nuevo</button>
+    </div>
+
+    <div class="header-info">
+        <div id="continent" class="continent-tag">Cargando...</div>
+        <div id="lives-display" class="lives">❤️❤️❤️❤️❤️</div>
+    </div>
+
+    <h2>¿Cuál es la capital?</h2>
+    
+    <img id="flag" class="flag-img" src="" alt="Bandera">
+
+    <div id="question" class="question-box">País</div>
+    
+    <input type="text" id="userResponse" placeholder="Escribe la capital..." autocomplete="off" onkeypress="if(event.key==='Enter') checkAnswer()">
+    
+    <button id="sendBtn" class="btn-main" onclick="checkAnswer()">Enviar respuesta</button>
+
+    <div id="feedback"></div>
+    <div style="margin-top:15px; font-size: 0.8rem; color: #95a5a6;">Aciertos: <span id="score">0</span></div>
+</div>
+
+<script>
+    const datos = [
+        {p: "Afganistán", c: "Kabul", cont: "Asia", f: "af"}, {p: "Albania", c: "Tirana", cont: "Europa", f: "al"}, {p: "Alemania", c: "Berlín", cont: "Europa", f: "de"}, {p: "Andorra", c: "Andorra la Vieja", cont: "Europa", f: "ad"},
+        {p: "Angola", c: "Luanda", cont: "África", f: "ao"}, {p: "Antigua y Barbuda", c: "Saint John", cont: "América", f: "ag"}, {p: "Arabia Saudita", c: "Riad", cont: "Asia", f: "sa"}, {p: "Argelia", c: "Argel", cont: "África", f: "dz"},
+        {p: "Argentina", c: "Buenos Aires", cont: "América", f: "ar"}, {p: "Armenia", c: "Ereván", cont: "Asia", f: "am"}, {p: "Australia", c: "Camberra", cont: "Oceanía", f: "au"}, {p: "Austria", c: "Viena", cont: "Europa", f: "at"},
+        {p: "Azerbaiyán", c: "Bakú", cont: "Asia", f: "az"}, {p: "Bahamas", c: "Nasáu", cont: "América", f: "bs"}, {p: "Bangladés", c: "Daca", cont: "Asia", f: "bd"}, {p: "Barbados", c: "Bridgetown", cont: "América", f: "bb"},
+        {p: "Baréin", c: "Manama", cont: "Asia", f: "bh"}, {p: "Bélgica", c: "Bruselas", cont: "Europa", f: "be"}, {p: "Belice", c: "Belmopán", cont: "América", f: "bz"}, {p: "Benín", c: "Porto Novo", cont: "África", f: "bj"},
+        {p: "Bielorrusia", c: "Minsk", cont: "Europa", f: "by"}, {p: "Birmania", c: "Naipyidó", cont: "Asia", f: "mm"}, {p: "Bolivia", c: "Sucre", cont: "América", f: "bo"}, {p: "Bosnia y Herzegovina", c: "Sarajevo", cont: "Europa", f: "ba"},
+        {p: "Botsuana", c: "Gaborone", cont: "África", f: "bw"}, {p: "Brasil", c: "Brasilia", cont: "América", f: "br"}, {p: "Brunéi", c: "Bandar Seri Begawan", cont: "Asia", f: "bn"}, {p: "Bulgaria", c: "Sofía", cont: "Europa", f: "bg"},
+        {p: "Burkina Faso", c: "Uagadugú", cont: "África", f: "bf"}, {p: "Burundi", c: "Gitega", cont: "África", f: "bi"}, {p: "Bután", c: "Timbu", cont: "Asia", f: "bt"}, {p: "Cabo Verde", c: "Praia", cont: "África", f: "cv"},
+        {p: "Camboya", c: "Nom Pen", cont: "Asia", f: "kh"}, {p: "Camerún", c: "Yaundé", cont: "África", f: "cm"}, {p: "Canadá", c: "Ottawa", cont: "América", f: "ca"}, {p: "Catar", c: "Doha", cont: "Asia", f: "qa"},
+        {p: "Chad", c: "Yamena", cont: "África", f: "td"}, {p: "Chile", c: "Santiago", cont: "América", f: "cl"}, {p: "China", c: "Pekín", cont: "Asia", f: "cn"}, {p: "Chipre", c: "Nicosia", cont: "Asia/Europa", f: "cy"},
+        {p: "Ciudad del Vaticano", c: "Ciudad del Vaticano", cont: "Europa", f: "va"}, {p: "Colombia", c: "Bogotá", cont: "América", f: "co"}, {p: "Comoras", c: "Moroni", cont: "África", f: "km"},
+        {p: "Corea del Norte", c: "Pionyang", cont: "Asia", f: "kp"}, {p: "Corea del Sur", c: "Seúl", cont: "Asia", f: "kr"}, {p: "Costa de Marfil", c: "Yamusukro", cont: "África", f: "ci"},
+        {p: "Costa Rica", c: "San José", cont: "América", f: "cr"}, {p: "Croacia", c: "Zagreb", cont: "Europa", f: "hr"}, {p: "Cuba", c: "La Habana", cont: "América", f: "cu"}, {p: "Dinamarca", c: "Copenhague", cont: "Europa", f: "dk"},
+        {p: "Dominica", c: "Roseau", cont: "América", f: "dm"}, {p: "Ecuador", c: "Quito", cont: "América", f: "ec"}, {p: "Egipto", c: "El Cairo", cont: "África/Asia", f: "eg"}, {p: "El Salvador", c: "San Salvador", cont: "América", f: "sv"},
+        {p: "Emiratos Árabes Unidos", c: "Abu Dabi", cont: "Asia", f: "ae"}, {p: "Eritrea", c: "Asmara", cont: "África", f: "er"}, {p: "Eslovaquia", c: "Bratislava", cont: "Europa", f: "sk"},
+        {p: "Eslovenia", c: "Liubliana", cont: "Europa", f: "si"}, {p: "España", c: "Madrid", cont: "Europa", f: "es"}, {p: "Estados Unidos", c: "Washington", cont: "América", f: "us"},
+        {p: "Estonia", c: "Tallin", cont: "Europa", f: "ee"}, {p: "Etiopía", c: "Adís Abeba", cont: "África", f: "et"}, {p: "Filipinas", c: "Manila", cont: "Asia", f: "ph"}, {p: "Finlandia", c: "Helsinki", cont: "Europa", f: "fi"},
+        {p: "Fiyi", c: "Suva", cont: "Oceanía", f: "fj"}, {p: "Francia", c: "París", cont: "Europa", f: "fr"}, {p: "Gabón", c: "Libreville", cont: "África", f: "ga"}, {p: "Gambia", c: "Banjul", cont: "África", f: "gm"},
+        {p: "Georgia", c: "Tiflis", cont: "Asia/Europa", f: "ge"}, {p: "Ghana", c: "Acra", cont: "África", f: "gh"}, {p: "Granada", c: "Saint George", cont: "América", f: "gd"}, {p: "Grecia", c: "Atenas", cont: "Europa", f: "gr"},
+        {p: "Guatemala", c: "Ciudad de Guatemala", cont: "América", f: "gt"}, {p: "Guinea", c: "Conakri", cont: "África", f: "gn"}, {p: "Guinea-Bisáu", c: "Bisáu", cont: "África", f: "gw"},
+        {p: "Guinea Ecuatorial", c: "Malabo", cont: "África", f: "gq"}, {p: "Guyana", c: "Georgetown", cont: "América", f: "gy"}, {p: "Haití", c: "Puerto Príncipe", cont: "América", f: "ht"},
+        {p: "Honduras", c: "Tegucigalpa", cont: "América", f: "hn"}, {p: "Hungría", c: "Budapest", cont: "Europa", f: "hu"}, {p: "India", c: "Nueva Delhi", cont: "Asia", f: "in"}, {p: "Indonesia", c: "Yakarta", cont: "Asia", f: "id"},
+        {p: "Irak", c: "Bagdad", cont: "Asia", f: "iq"}, {p: "Irán", c: "Teherán", cont: "Asia", f: "ir"}, {p: "Irlanda", c: "Dublín", cont: "Europa", f: "ie"}, {p: "Islandia", c: "Reikiavik", cont: "Europa", f: "is"},
+        {p: "Islas Marshall", c: "Majuro", cont: "Oceanía", f: "mh"}, {p: "Islas Salomón", c: "Honiara", cont: "Oceanía", f: "sb"}, {p: "Israel", c: "Jerusalén", cont: "Asia", f: "il"}, {p: "Italia", c: "Roma", cont: "Europa", f: "it"},
+        {p: "Jamaica", c: "Kingston", cont: "América", f: "jm"}, {p: "Japón", c: "Tokio", cont: "Asia", f: "jp"}, {p: "Jordania", c: "Amán", cont: "Asia", f: "jo"}, {p: "Kazajistán", c: "Astaná", cont: "Asia/Europa", f: "kz"},
+        {p: "Kenia", c: "Nairobi", cont: "África", f: "ke"}, {p: "Kirguistán", c: "Biskek", cont: "Asia", f: "kg"}, {p: "Kiribati", c: "Tarawa", cont: "Oceanía", f: "ki"}, {p: "Kuwait", c: "Kuwait", cont: "Asia", f: "kw"},
+        {p: "Laos", c: "Vientián", cont: "Asia", f: "la"}, {p: "Lesoto", c: "Maseru", cont: "África", f: "ls"}, {p: "Letonia", c: "Riga", cont: "Europa", f: "lv"}, {p: "Líbano", c: "Beirut", cont: "Asia", f: "lb"},
+        {p: "Liberia", c: "Monrovia", cont: "África", f: "lr"}, {p: "Libia", c: "Trípoli", cont: "África", f: "ly"}, {p: "Liechtenstein", c: "Vaduz", cont: "Europa", f: "li"}, {p: "Lituania", c: "Vilna", cont: "Europa", f: "lt"},
+        {p: "Luxemburgo", c: "Luxemburgo", cont: "Europa", f: "lu"}, {p: "Macedonia del Norte", c: "Skopie", cont: "Europa", f: "mk"}, {p: "Madagascar", c: "Antananarivo", cont: "África", f: "mg"},
+        {p: "Malasia", c: "Kuala Lumpur", cont: "Asia", f: "my"}, {p: "Malaui", c: "Lilongüe", cont: "África", f: "mw"}, {p: "Maldivas", c: "Malé", cont: "Asia", f: "mv"}, {p: "Malí", c: "Bamako", cont: "África", f: "ml"},
+        {p: "Malta", c: "La Valeta", cont: "Europa", f: "mt"}, {p: "Marruecos", c: "Rabat", cont: "África", f: "ma"}, {p: "Mauricio", c: "Port Louis", cont: "África", f: "mu"}, {p: "Mauritania", c: "Nuakchot", cont: "África", f: "mr"},
+        {p: "México", c: "Ciudad de México", cont: "América", f: "mx"}, {p: "Micronesia", c: "Palikir", cont: "Oceanía", f: "fm"}, {p: "Moldavia", c: "Chisináu", cont: "Europa", f: "md"}, {p: "Mónaco", c: "Mónaco", cont: "Europa", f: "mc"},
+        {p: "Mongolia", c: "Ulán Bator", cont: "Asia", f: "mn"}, {p: "Montenegro", c: "Podgorica", cont: "Europa", f: "me"}, {p: "Mozambique", c: "Maputo", cont: "África", f: "mz"}, {p: "Namibia", c: "Windhoek", cont: "África", f: "na"},
+        {p: "Nauru", c: "Yaren", cont: "Oceanía", f: "nr"}, {p: "Nepal", c: "Katmandú", cont: "Asia", f: "np"}, {p: "Nicaragua", c: "Managua", cont: "América", f: "ni"}, {p: "Níger", c: "Niamey", cont: "África", f: "ne"},
+        {p: "Nigeria", c: "Abuya", cont: "África", f: "ng"}, {p: "Noruega", c: "Oslo", cont: "Europa", f: "no"}, {p: "Nueva Zelanda", c: "Wellington", cont: "Oceanía", f: "nz"}, {p: "Omán", c: "Mascate", cont: "Asia", f: "om"},
+        {p: "Países Bajos", c: "Ámsterdam", cont: "Europa", f: "nl"}, {p: "Pakistán", c: "Islamabad", cont: "Asia", f: "pk"}, {p: "Palaos", c: "Ngerulmud", cont: "Oceanía", f: "pw"}, {p: "Panamá", c: "Ciudad de Panamá", cont: "América", f: "pa"},
+        {p: "Papúa Nueva Guinea", c: "Port Moresby", cont: "Oceanía", f: "pg"}, {p: "Paraguay", c: "Asunción", cont: "América", f: "py"}, {p: "Perú", c: "Lima", cont: "América", f: "pe"}, {p: "Polonia", c: "Varsovia", cont: "Europa", f: "pl"},
+        {p: "Portugal", c: "Lisboa", cont: "Europa", f: "pt"}, {p: "Reino Unido", c: "Londres", cont: "Europa", f: "gb"}, {p: "República Centroafricana", c: "Bangui", cont: "África", f: "cf"}, 
+        {p: "República Checa", c: "Praga", cont: "Europa", f: "cz"}, {p: "República del Congo", c: "Brazzaville", cont: "África", f: "cg"}, {p: "República Democrática del Congo", c: "Kinsasa", cont: "África", f: "cd"},
+        {p: "República Dominicana", c: "Santo Domingo", cont: "América", f: "do"}, {p: "Ruanda", c: "Kigali", cont: "África", f: "rw"}, {p: "Rumania", c: "Bucarest", cont: "Europa", f: "ro"}, {p: "Rusia", c: "Moscú", cont: "Europa/Asia", f: "ru"},
+        {p: "Samoa", c: "Apia", cont: "Oceanía", f: "ws"}, {p: "San Cristóbal y Nieves", c: "Basseterre", cont: "América", f: "kn"}, {p: "San Marino", c: "San Marino", cont: "Europa", f: "sm"}, {p: "San Vicente y las Granadinas", c: "Kingstown", cont: "América", f: "vc"},
+        {p: "Santa Lucía", c: "Castries", cont: "América", f: "lc"}, {p: "Santo Tomé y Príncipe", c: "Santo Tomé", cont: "África", f: "st"}, {p: "Senegal", c: "Dakar", cont: "África", f: "sn"}, {p: "Serbia", c: "Belgrado", cont: "Europa", f: "rs"},
+        {p: "Seychelles", c: "Victoria", cont: "África", f: "sc"}, {p: "Sierra Leona", c: "Freetown", cont: "África", f: "sl"}, {p: "Singapur", c: "Singapur", cont: "Asia", f: "sg"}, {p: "Siria", c: "Damasco", cont: "Asia", f: "sy"},
+        {p: "Somalia", c: "Mogadiscio", cont: "África", f: "so"}, {p: "Sri Lanka", c: "Colombo", cont: "Asia", f: "lk"}, {p: "Suazilandia", c: "Mbabane", cont: "África", f: "sz"}, {p: "Sudáfrica", c: "Pretoria", cont: "África", f: "za"},
+        {p: "Sudán", c: "Jartum", cont: "África", f: "sd"}, {p: "Sudán del Sur", c: "Yuba", cont: "África", f: "ss"}, {p: "Suecia", c: "Estocolmo", cont: "Europa", f: "se"}, {p: "Suiza", c: "Berna", cont: "Europa", f: "ch"},
+        {p: "Surinam", c: "Paramaribo", cont: "América", f: "sr"}, {p: "Tailandia", c: "Bangkok", cont: "Asia", f: "th"}, {p: "Taiwán", c: "Taipéi", cont: "Asia", f: "tw"}, {p: "Tanzania", c: "Dodoma", cont: "África", f: "tz"},
+        {p: "Tayikistán", c: "Dusambé", cont: "Asia", f: "tj"}, {p: "Timor Oriental", c: "Dili", cont: "Asia", f: "tl"}, {p: "Togo", c: "Lomé", cont: "África", f: "tg"}, {p: "Tonga", c: "Nukualofa", cont: "Oceanía", f: "to"},
+        {p: "Trinidad y Tobago", c: "Puerto España", cont: "América", f: "tt"}, {p: "Túnez", c: "Túnez", cont: "África", f: "tn"}, {p: "Turkmenistán", c: "Asjabad", cont: "Asia", f: "tm"}, {p: "Turquía", c: "Ankara", cont: "Asia/Europa", f: "tr"},
+        {p: "Tuvalu", c: "Funafuti", cont: "Oceanía", f: "tv"}, {p: "Ucrania", c: "Kiev", cont: "Europa", f: "ua"}, {p: "Uganda", c: "Kampala", cont: "África", f: "ug"}, {p: "Uruguay", c: "Montevideo", cont: "América", f: "uy"},
+        {p: "Uzbekistán", c: "Taskent", cont: "Asia", f: "uz"}, {p: "Vanuatu", c: "Port Vila", cont: "Oceanía", f: "vu"}, {p: "Venezuela", c: "Caracas", cont: "América", f: "ve"}, {p: "Vietnam", c: "Hanói", cont: "Asia", f: "vn"},
+        {p: "Yemen", c: "Saná", cont: "Asia", f: "ye"}, {p: "Yibuti", c: "Yibuti", cont: "África", f: "dj"}, {p: "Zambia", c: "Lusaka", cont: "África", f: "zm"}, {p: "Zimbabue", c: "Harare", cont: "África", f: "zw"}
+    ];
+
+    let preguntaActual;
+    let vidas = 5;
+    let aciertos = 0;
+
+    function nuevaPregunta() {
+        if (vidas <= 0) return;
+
+        preguntaActual = datos[Math.floor(Math.random() * datos.length)];
+        
+        document.getElementById('question').textContent = preguntaActual.p;
+        document.getElementById('continent').textContent = preguntaActual.cont;
+        document.getElementById('flag').src = `https://flagcdn.com/w160/${preguntaActual.f}.png`;
+        
+        const feedback = document.getElementById('feedback');
+        feedback.style.display = "none";
+        
+        const input = document.getElementById('userResponse');
+        input.disabled = false;
+        input.value = "";
+        input.focus();
+        document.getElementById('sendBtn').disabled = false;
+    }
+
+    function normalize(str) {
+        return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+    }
+
+    function checkAnswer() {
+        const inputElement = document.getElementById('userResponse');
+        const feedback = document.getElementById('feedback');
+        const userText = inputElement.value;
+
+        if (userText.trim() === "" || inputElement.disabled) return;
+
+        inputElement.disabled = true;
+        document.getElementById('sendBtn').disabled = true;
+        feedback.style.display = "block";
+
+        if (normalize(userText) === normalize(preguntaActual.c)) {
+            aciertos++;
+            document.getElementById('score').textContent = aciertos;
+            feedback.innerHTML = "¡Correcto! 🌟";
+            feedback.className = "correct";
+            setTimeout(nuevaPregunta, 1000); 
+        } else {
+            vidas--;
+            updateLives();
+            feedback.innerHTML = `Incorrecto ❌ <span class="solution">La capital era: <b>${preguntaActual.c}</b></span>`;
+            feedback.className = "incorrect";
+            
+            if (vidas > 0) {
+                setTimeout(nuevaPregunta, 2500); 
+            } else {
+                setTimeout(gameOver, 2500);
+            }
+        }
+    }
+
+    function updateLives() {
+        const display = document.getElementById('lives-display');
+        display.textContent = "❤️".repeat(vidas) + "🖤".repeat(5 - vidas);
+    }
+
+    function gameOver() {
+        document.getElementById('game-over').style.display = "flex";
+        document.getElementById('final-score').textContent = `Lograste ${aciertos} aciertos.`;
+    }
+
+    function resetGame() {
+        vidas = 5;
+        aciertos = 0;
+        document.getElementById('score').textContent = "0";
+        updateLives();
+        document.getElementById('game-over').style.display = "none";
+        nuevaPregunta();
+    }
+
+    nuevaPregunta();
+</script>
+
+</body>
+</html>

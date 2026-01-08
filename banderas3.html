@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>WORLD CAPITALS: ARCADE HALL OF FAME</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root { --retro-green: #3f3; --retro-red: #f00; --retro-bg: #111; }
+        body { font-family: 'Press Start 2P', cursive; background-color: #000; color: var(--retro-green); display: flex; justify-content: center; padding-top: 20px; text-transform: uppercase; }
+        .card { background: var(--retro-bg); padding: 1.5rem; border: 4px solid var(--retro-green); box-shadow: 8px 8px 0px #222; width: 550px; text-align: center; position: relative; }
+        
+        /* BARRA PROGRESO */
+        .progress-border { width: 100%; height: 15px; border: 2px solid var(--retro-green); margin: 10px 0; background: #000; }
+        #progress-bar { width: 0%; height: 100%; background: var(--retro-green); transition: width 0.3s; box-shadow: 0 0 10px var(--retro-green); }
+
+        .header-info { display: flex; justify-content: space-between; font-size: 10px; margin: 15px 0; }
+        .lives { color: var(--retro-red); }
+        .score-display { font-size: 18px; color: #fff; margin: 5px 0; }
+
+        .flag-img { width: 120px; border: 3px solid #fff; margin: 10px 0; image-rendering: pixelated; }
+        .question-box { border: 2px dashed var(--retro-green); padding: 15px; margin: 15px 0; font-size: 11px; min-height: 45px; display: flex; align-items: center; justify-content: center; }
+        
+        input[type="text"] { width: 85%; padding: 12px; background: #000; border: 2px solid var(--retro-green); color: var(--retro-green); font-family: 'Press Start 2P'; font-size: 10px; text-align: center; outline: none; }
+        .btn-main { background: var(--retro-green); color: #000; border: none; padding: 15px; margin-top: 15px; cursor: pointer; width: 100%; font-family: 'Press Start 2P'; font-size: 10px; }
+
+        /* PANTALLAS */
+        #game-over, #start-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; flex-direction: column; justify-content: center; align-items: center; z-index: 10; padding: 20px; box-sizing: border-box; }
+        #start-screen { display: flex; }
+
+        /* RANKING */
+        .ranking-list { list-style: none; padding: 0; font-size: 10px; color: #fff; margin-top: 20px; width: 100%; }
+        .ranking-item { display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="start-screen">
+        <h2 style="font-size: 20px;">WORLD<br>CAPITALS</h2>
+        <div id="high-score-board" class="ranking-list">
+            <p style="color: var(--retro-green); margin-bottom: 15px;">TOP 5 AGENTS</p>
+            <div id="scores-list"></div>
+        </div>
+        <button class="btn-main" onclick="startGame()" style="margin-top: 20px;">PRESS START</button>
+    </div>
+
+    <div id="game-over">
+        <h1 class="blink" style="color: var(--retro-red); font-size: 20px;">MISSION FAILED</h1>
+        <div class="score-display" id="final-points">0000 PTS</div>
+        <div id="new-record" style="display:none; color: gold; font-size: 10px; margin: 10px;">¡NUEVO RÉCORD!</div>
+        <button class="btn-main" onclick="resetGame()" style="width: auto; padding: 15px 30px;">RETRY</button>
+    </div>
+
+    <div class="progress-border"><div id="progress-bar"></div></div>
+    <div class="header-info">
+        <div id="continent">REGION: ---</div>
+        <div id="lives-display" class="lives">LIVES: 5</div>
+    </div>
+    <div id="score" class="score-display">0000</div>
+    <img id="flag" class="flag-img" src="" alt="FLAG">
+    <div id="question" class="question-box">READY?</div>
+    <input type="text" id="userResponse" placeholder="TYPE CAPITAL..." autocomplete="off" onkeypress="if(event.key==='Enter') checkAnswer()">
+    <button id="sendBtn" class="btn-main" onclick="checkAnswer()">SEND</button>
+    <div id="feedback" style="margin-top:15px; font-size:9px; height: 15px;"></div>
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        if (type === 'correct') {
+            osc.type = 'square'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        }
+    }
+
+    const datos = [
+        {p: "Afganistán", c: "Kabul", cont: "Asia", f: "af"}, {p: "Albania", c: "Tirana", cont: "Europa", f: "al"}, {p: "Alemania", c: "Berlín", cont: "Europa", f: "de"}, {p: "Andorra", c: "Andorra la Vieja", cont: "Europa", f: "ad"},
+        {p: "Angola", c: "Luanda", cont: "África", f: "ao"}, {p: "Antigua y Barbuda", c: "Saint John", cont: "América", f: "ag"}, {p: "Arabia Saudita", c: "Riad", cont: "Asia", f: "sa"}, {p: "Argelia", c: "Argel", cont: "África", f: "dz"},
+        {p: "Argentina", c: "Buenos Aires", cont: "América", f: "ar"}, {p: "Armenia", c: "Ereván", cont: "Asia", f: "am"}, {p: "Australia", c: "Camberra", cont: "Oceanía", f: "au"}, {p: "Austria", c: "Viena", cont: "Europa", f: "at"},
+        {p: "Azerbaiyán", c: "Bakú", cont: "Asia", f: "az"}, {p: "Bahamas", c: "Nasáu", cont: "América", f: "bs"}, {p: "Bangladés", c: "Daca", cont: "Asia", f: "bd"}, {p: "Barbados", c: "Bridgetown", cont: "América", f: "bb"},
+        {p: "Baréin", c: "Manama", cont: "Asia", f: "bh"}, {p: "Bélgica", c: "Bruselas", cont: "Europa", f: "be"}, {p: "Belice", c: "Belmopán", cont: "América", f: "bz"}, {p: "Benín", c: "Porto Novo", cont: "África", f: "bj"},
+        {p: "Bielorrusia", c: "Minsk", cont: "Europa", f: "by"}, {p: "Birmania", c: "Naipyidó", cont: "Asia", f: "mm"}, {p: "Bolivia", c: "Sucre", cont: "América", f: "bo"}, {p: "Bosnia y Herzegovina", c: "Sarajevo", cont: "Europa", f: "ba"},
+        {p: "Botsuana", c: "Gaborone", cont: "África", f: "bw"}, {p: "Brasil", c: "Brasilia", cont: "América", f: "br"}, {p: "Brunéi", c: "Bandar Seri Begawan", cont: "Asia", f: "bn"}, {p: "Bulgaria", c: "Sofía", cont: "Europa", f: "bg"},
+        {p: "Burkina Faso", c: "Uagadugú", cont: "África", f: "bf"}, {p: "Burundi", c: "Gitega", cont: "África", f: "bi"}, {p: "Bután", c: "Timbu", cont: "Asia", f: "bt"}, {p: "Cabo Verde", c: "Praia", cont: "África", f: "cv"},
+        {p: "Camboya", c: "Nom Pen", cont: "Asia", f: "kh"}, {p: "Camerún", c: "Yaundé", cont: "África", f: "cm"}, {p: "Canadá", c: "Ottawa", cont: "América", f: "ca"}, {p: "Catar", c: "Doha", cont: "Asia", f: "qa"},
+        {p: "Chad", c: "Yamena", cont: "África", f: "td"}, {p: "Chile", c: "Santiago", cont: "América", f: "cl"}, {p: "China", c: "Pekín", cont: "Asia", f: "cn"}, {p: "Chipre", c: "Nicosia", cont: "Asia/Europa", f: "cy"},
+        {p: "Ciudad del Vaticano", c: "Ciudad del Vaticano", cont: "Europa", f: "va"}, {p: "Colombia", c: "Bogotá", cont: "América", f: "co"}, {p: "Comoras", c: "Moroni", cont: "África", f: "km"},
+        {p: "Corea del Norte", c: "Pionyang", cont: "Asia", f: "kp"}, {p: "Corea del Sur", c: "Seúl", cont: "Asia", f: "kr"}, {p: "Costa de Marfil", c: "Yamusukro", cont: "África", f: "ci"},
+        {p: "Costa Rica", c: "San José", cont: "América", f: "cr"}, {p: "Croacia", c: "Zagreb", cont: "Europa", f: "hr"}, {p: "Cuba", c: "La Habana", cont: "América", f: "cu"}, {p: "Dinamarca", c: "Copenhague", cont: "Europa", f: "dk"},
+        {p: "Dominica", c: "Roseau", cont: "América", f: "dm"}, {p: "Ecuador", c: "Quito", cont: "América", f: "ec"}, {p: "Egipto", c: "El Cairo", cont: "África/Asia", f: "eg"}, {p: "El Salvador", c: "San Salvador", cont: "América", f: "sv"},
+        {p: "Emiratos Árabes Unidos", c: "Abu Dabi", cont: "Asia", f: "ae"}, {p: "Eritrea", c: "Asmara", cont: "África", f: "er"}, {p: "Eslovaquia", c: "Bratislava", cont: "Europa", f: "sk"},
+        {p: "Eslovenia", c: "Liubliana", cont: "Europa", f: "si"}, {p: "España", c: "Madrid", cont: "Europa", f: "es"}, {p: "Estados Unidos", c: "Washington", cont: "América", f: "us"},
+        {p: "Estonia", c: "Tallin", cont: "Europa", f: "ee"}, {p: "Etiopía", c: "Adís Abeba", cont: "África", f: "et"}, {p: "Filipinas", c: "Manila", cont: "Asia", f: "ph"}, {p: "Finlandia", c: "Helsinki", cont: "Europa", f: "fi"},
+        {p: "Fiyi", c: "Suva", cont: "Oceanía", f: "fj"}, {p: "Francia", c: "París", cont: "Europa", f: "fr"}, {p: "Gabón", c: "Libreville", cont: "África", f: "ga"}, {p: "Gambia", c: "Banjul", cont: "África", f: "gm"},
+        {p: "Georgia", c: "Tiflis", cont: "Asia/Europa", f: "ge"}, {p: "Ghana", c: "Acra", cont: "África", f: "gh"}, {p: "Granada", c: "Saint George", cont: "América", f: "gd"}, {p: "Grecia", c: "Atenas", cont: "Europa", f: "gr"},
+        {p: "Guatemala", c: "Ciudad de Guatemala", cont: "América", f: "gt"}, {p: "Guinea", c: "Conakri", cont: "África", f: "gn"}, {p: "Guinea-Bisáu", c: "Bisáu", cont: "África", f: "gw"},
+        {p: "Guinea Ecuatorial", c: "Malabo", cont: "África", f: "gq"}, {p: "Guyana", c: "Georgetown", cont: "América", f: "gy"}, {p: "Haití", c: "Puerto Príncipe", cont: "América", f: "ht"},
+        {p: "Honduras", c: "Tegucigalpa", cont: "América", f: "hn"}, {p: "Hungría", c: "Budapest", cont: "Europa", f: "hu"}, {p: "India", c: "Nueva Delhi", cont: "Asia", f: "in"}, {p: "Indonesia", c: "Yakarta", cont: "Asia", f: "id"},
+        {p: "Irak", c: "Bagdad", cont: "Asia", f: "iq"}, {p: "Irán", c: "Teherán", cont: "Asia", f: "ir"}, {p: "Irlanda", c: "Dublín", cont: "Europa", f: "ie"}, {p: "Islandia", c: "Reikiavik", cont: "Europa", f: "is"},
+        {p: "Islas Marshall", c: "Majuro", cont: "Oceanía", f: "mh"}, {p: "Islas Salomón", c: "Honiara", cont: "Oceanía", f: "sb"}, {p: "Israel", c: "Jerusalén", cont: "Asia", f: "il"}, {p: "Italia", c: "Roma", cont: "Europa", f: "it"},
+        {p: "Jamaica", c: "Kingston", cont: "América", f: "jm"}, {p: "Japón", c: "Tokio", cont: "Asia", f: "jp"}, {p: "Jordania", c: "Amán", cont: "Asia", f: "jo"}, {p: "Kazajistán", c: "Astaná", cont: "Asia/Europa", f: "kz"},
+        {p: "Kenia", c: "Nairobi", cont: "África", f: "ke"}, {p: "Kirguistán", c: "Biskek", cont: "Asia", f: "kg"}, {p: "Kiribati", c: "Tarawa", cont: "Oceanía", f: "ki"}, {p: "Kuwait", c: "Kuwait", cont: "Asia", f: "kw"},
+        {p: "Laos", c: "Vientián", cont: "Asia", f: "la"}, {p: "Lesoto", c: "Maseru", cont: "África", f: "ls"}, {p: "Letonia", c: "Riga", cont: "Europa", f: "lv"}, {p: "Líbano", c: "Beirut", cont: "Asia", f: "lb"},
+        {p: "Liberia", c: "Monrovia", cont: "África", f: "lr"}, {p: "Libia", c: "Trípoli", cont: "África", f: "ly"}, {p: "Liechtenstein", c: "Vaduz", cont: "Europa", f: "li"}, {p: "Lituania", c: "Vilna", cont: "Europa", f: "lt"},
+        {p: "Luxemburgo", c: "Luxemburgo", cont: "Europa", f: "lu"}, {p: "Macedonia del Norte", c: "Skopie", cont: "Europa", f: "mk"}, {p: "Madagascar", c: "Antananarivo", cont: "África", f: "mg"},
+        {p: "Malasia", c: "Kuala Lumpur", cont: "Asia", f: "my"}, {p: "Malaui", c: "Lilongüe", cont: "África", f: "mw"}, {p: "Maldivas", c: "Malé", cont: "Asia", f: "mv"}, {p: "Malí", c: "Bamako", cont: "África", f: "ml"},
+        {p: "Malta", c: "La Valeta", cont: "Europa", f: "mt"}, {p: "Marruecos", c: "Rabat", cont: "África", f: "ma"}, {p: "Mauricio", c: "Port Louis", cont: "África", f: "mu"}, {p: "Mauritania", c: "Nuakchot", cont: "África", f: "mr"},
+        {p: "México", c: "Ciudad de México", cont: "América", f: "mx"}, {p: "Micronesia", c: "Palikir", cont: "Oceanía", f: "fm"}, {p: "Moldavia", c: "Chisináu", cont: "Europa", f: "md"}, {p: "Mónaco", c: "Mónaco", cont: "Europa", f: "mc"},
+        {p: "Mongolia", c: "Ulán Bator", cont: "Asia", f: "mn"}, {p: "Montenegro", c: "Podgorica", cont: "Europa", f: "me"}, {p: "Mozambique", c: "Maputo", cont: "África", f: "mz"}, {p: "Namibia", c: "Windhoek", cont: "África", f: "na"},
+        {p: "Nauru", c: "Yaren", cont: "Oceanía", f: "nr"}, {p: "Nepal", c: "Katmandú", cont: "Asia", f: "np"}, {p: "Nicaragua", c: "Managua", cont: "América", f: "ni"}, {p: "Níger", c: "Niamey", cont: "África", f: "ne"},
+        {p: "Nigeria", c: "Abuya", cont: "África", f: "ng"}, {p: "Noruega", c: "Oslo", cont: "Europa", f: "no"}, {p: "Nueva Zelanda", c: "Wellington", cont: "Oceanía", f: "nz"}, {p: "Omán", c: "Mascate", cont: "Asia", f: "om"},
+        {p: "Países Bajos", c: "Ámsterdam", cont: "Europa", f: "nl"}, {p: "Pakistán", c: "Islamabad", cont: "Asia", f: "pk"}, {p: "Palaos", c: "Ngerulmud", cont: "Oceanía", f: "pw"}, {p: "Panamá", c: "Ciudad de Panamá", cont: "América", f: "pa"},
+        {p: "Papúa Nueva Guinea", c: "Port Moresby", cont: "Oceanía", f: "pg"}, {p: "Paraguay", c: "Asunción", cont: "América", f: "py"}, {p: "Perú", c: "Lima", cont: "América", f: "pe"}, {p: "Polonia", c: "Varsovia", cont: "Europa", f: "pl"},
+        {p: "Portugal", c: "Lisboa", cont: "Europa", f: "pt"}, {p: "Reino Unido", c: "Londres", cont: "Europa", f: "gb"}, {p: "República Centroafricana", c: "Bangui", cont: "África", f: "cf"}, 
+        {p: "República Checa", c: "Praga", cont: "Europa", f: "cz"}, {p: "República del Congo", c: "Brazzaville", cont: "África", f: "cg"}, {p: "República Democrática del Congo", c: "Kinsasa", cont: "África", f: "cd"},
+        {p: "República Dominicana", c: "Santo Domingo", cont: "América", f: "do"}, {p: "Ruanda", c: "Kigali", cont: "África", f: "rw"}, {p: "Rumania", c: "Bucarest", cont: "Europa", f: "ro"}, {p: "Rusia", c: "Moscú", cont: "Europa/Asia", f: "ru"},
+        {p: "Samoa", c: "Apia", cont: "Oceanía", f: "ws"}, {p: "San Cristóbal y Nieves", c: "Basseterre", cont: "América", f: "kn"}, {p: "San Marino", c: "San Marino", cont: "Europa", f: "sm"}, {p: "San Vicente y las Granadinas", c: "Kingstown", cont: "América", f: "vc"},
+        {p: "Santa Lucía", c: "Castries", cont: "América", f: "lc"}, {p: "Santo Tomé y Príncipe", c: "Santo Tomé", cont: "África", f: "st"}, {p: "Senegal", c: "Dakar", cont: "África", f: "sn"}, {p: "Serbia", c: "Belgrado", cont: "Europa", f: "rs"},
+        {p: "Seychelles", c: "Victoria", cont: "África", f: "sc"}, {p: "Sierra Leona", c: "Freetown", cont: "África", f: "sl"}, {p: "Singapur", c: "Singapur", cont: "Asia", f: "sg"}, {p: "Siria", c: "Damasco", cont: "Asia", f: "sy"},
+        {p: "Somalia", c: "Mogadiscio", cont: "África", f: "so"}, {p: "Sri Lanka", c: "Colombo", cont: "Asia", f: "lk"}, {p: "Suazilandia", c: "Mbabane", cont: "África", f: "sz"}, {p: "Sudáfrica", c: "Pretoria", cont: "África", f: "za"},
+        {p: "Sudán", c: "Jartum", cont: "África", f: "sd"}, {p: "Sudán del Sur", c: "Yuba", cont: "África", f: "ss"}, {p: "Suecia", c: "Estocolmo", cont: "Europa", f: "se"}, {p: "Suiza", c: "Berna", cont: "Europa", f: "ch"},
+        {p: "Surinam", c: "Paramaribo", cont: "América", f: "sr"}, {p: "Tailandia", c: "Bangkok", cont: "Asia", f: "th"}, {p: "Taiwán", c: "Taipéi", cont: "Asia", f: "tw"}, {p: "Tanzania", c: "Dodoma", cont: "África", f: "tz"},
+        {p: "Tayikistán", c: "Dusambé", cont: "Asia", f: "tj"}, {p: "Timor Oriental", c: "Dili", cont: "Asia", f: "tl"}, {p: "Togo", c: "Lomé", cont: "África", f: "tg"}, {p: "Tonga", c: "Nukualofa", cont: "Oceanía", f: "to"},
+        {p: "Trinidad y Tobago", c: "Puerto España", cont: "América", f: "tt"}, {p: "Túnez", c: "Túnez", cont: "África", f: "tn"}, {p: "Turkmenistán", c: "Asjabad", cont: "Asia", f: "tm"}, {p: "Turquía", c: "Ankara", cont: "Asia/Europa", f: "tr"},
+        {p: "Tuvalu", c: "Funafuti", cont: "Oceanía", f: "tv"}, {p: "Ucrania", c: "Kiev", cont: "Europa", f: "ua"}, {p: "Uganda", c: "Kampala", cont: "África", f: "ug"}, {p: "Uruguay", c: "Montevideo", cont: "América", f: "uy"},
+        {p: "Uzbekistán", c: "Taskent", cont: "Asia", f: "uz"}, {p: "Vanuatu", c: "Port Vila", cont: "Oceanía", f: "vu"}, {p: "Venezuela", c: "Caracas", cont: "América", f: "ve"}, {p: "Vietnam", c: "Hanói", cont: "Asia", f: "vn"},
+        {p: "Yemen", c: "Saná", cont: "Asia", f: "ye"}, {p: "Yibuti", c: "Yibuti", cont: "África", f: "dj"}, {p: "Zambia", c: "Lusaka", cont: "África", f: "zm"}, {p: "Zimbabue", c: "Harare", cont: "África", f: "zw"}
+    ];
+
+    let current, lives = 5, score = 0, count = 0;
+
+    function loadRanking() {
+        const scores = JSON.parse(localStorage.getItem('arcade_ranking')) || [0,0,0,0,0];
+        const list = document.getElementById('scores-list');
+        list.innerHTML = scores.map((s, i) => `<div class="ranking-item"><span>RANK ${i+1}</span> <span>${s.toString().padStart(4, '0')} PTS</span></div>`).join('');
+    }
+
+    function saveScore(newScore) {
+        let scores = JSON.parse(localStorage.getItem('arcade_ranking')) || [0,0,0,0,0];
+        if (newScore > Math.min(...scores)) {
+            scores.push(newScore);
+            scores.sort((a, b) => b - a);
+            scores = scores.slice(0, 5);
+            localStorage.setItem('arcade_ranking', JSON.stringify(scores));
+            return true;
+        }
+        return false;
+    }
+
+    function startGame() { audioCtx.resume(); document.getElementById('start-screen').style.display = 'none'; next(); }
+
+    function next() {
+        if (lives <= 0) return;
+        current = datos[Math.floor(Math.random() * datos.length)];
+        document.getElementById('question').textContent = `NATION: ${current.p}`;
+        document.getElementById('continent').textContent = `ZONE: ${current.cont}`;
+        document.getElementById('flag').src = `https://flagcdn.com/w160/${current.f}.png`;
+        document.getElementById('feedback').textContent = "";
+        const input = document.getElementById('userResponse');
+        input.disabled = false; input.value = ""; input.focus();
+        document.getElementById('sendBtn').disabled = false;
+    }
+
+    function checkAnswer() {
+        const input = document.getElementById('userResponse');
+        const val = input.value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const ans = current.c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (!input.value.trim() || input.disabled) return;
+        input.disabled = true; count++;
+        document.getElementById('progress-bar').style.width = (count / datos.length * 100) + "%";
+        if (val === ans) {
+            score += 25; playSound('correct');
+            document.getElementById('score').textContent = score.toString().padStart(4, '0');
+            document.getElementById('feedback').style.color = "var(--retro-green)";
+            document.getElementById('feedback').textContent = "CORRECT!";
+            setTimeout(next, 800);
+        } else {
+            lives--; playSound('wrong');
+            document.getElementById('lives-display').textContent = `LIVES: ${lives}`;
+            document.getElementById('feedback').style.color = "var(--retro-red)";
+            document.getElementById('feedback').textContent = `FAIL! -> ${current.c}`;
+            if (lives > 0) setTimeout(next, 2000); else setTimeout(over, 1500);
+        }
+    }
+
+    function over() {
+        document.getElementById('game-over').style.display = 'flex';
+        document.getElementById('final-points').textContent = `${score.toString().padStart(4, '0')} PTS`;
+        const isNew = saveScore(score);
+        document.getElementById('new-record').style.display = isNew ? 'block' : 'none';
+        loadRanking();
+    }
+
+    function resetGame() {
+        lives = 5; score = 0; count = 0;
+        document.getElementById('score').textContent = "0000";
+        document.getElementById('lives-display').textContent = "LIVES: 5";
+        document.getElementById('progress-bar').style.width = "0%";
+        document.getElementById('game-over').style.display = 'none';
+        next();
+    }
+
+    loadRanking();
+</script>
+</body>
+</html>
