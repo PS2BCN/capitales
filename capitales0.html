@@ -162,11 +162,72 @@
     # Puedes seguir extendiendo hasta los 186 manteniendo exactamente este formato
             }
 
-            score = 0
+           score = 0
             lives = 5
             correct_ans = ""
             paises_restantes = list(PAISES_DATA.keys())
-            total_meta = 186 
-            aciertos_contados = 0
+            total_meta = 186
+            aciertos = 0
 
-            def update
+            def update_progress():
+                global aciertos
+                pct = (aciertos / total_meta) * 100
+                document.getElementById("progress-bar-fill").style.width = f"{pct}%"
+                document.getElementById("progress-stats").innerText = f"{aciertos} / {total_meta}"
+
+            def new_round():
+                global correct_ans, paises_restantes
+                
+                if not paises_restantes or lives <= 0:
+                    document.getElementById("question-text").innerText = "SISTEMA COMPLETADO"
+                    return
+
+                pais = random.choice(paises_restantes)
+                paises_restantes.remove(pais)
+
+                datos = PAISES_DATA[pais]
+                correct_ans = datos[0]
+                
+                # Imagen de bandera
+                iso = datos[4].lower()
+                img = document.getElementById("country-flag")
+                img.src = f"https://flagcdn.com/w640/{iso}.png"
+                img.style.display = "block"
+
+                document.getElementById("question-text").innerText = f"¿CAPITAL DE {pais.upper()}?"
+                
+                opciones = datos[0:4]
+                random.shuffle(opciones)
+                
+                for i in range(4):
+                    btn = document.getElementById(f"opt{i}")
+                    btn.innerText = opciones[i]
+
+            def check_click(evt):
+                global score, lives, aciertos
+                if evt.target.innerText == correct_ans:
+                    score += 50
+                    aciertos += 1
+                    document.getElementById("game-score").innerText = f"SCORE: {score:04d}"
+                    update_progress()
+                    new_round()
+                else:
+                    lives -= 1
+                    document.getElementById("lives").innerText = "❤" * max(0, lives)
+                    if lives <= 0:
+                        window.alert(f"SISTEMA CAÍDO. PUNTOS: {score}")
+                        window.location.reload()
+                    else:
+                        new_round()
+
+            # Eventos
+            for i in range(4):
+                document.getElementById(f"opt{i}").onclick = check_click
+
+            # Inicialización
+            update_progress() # Esto asegura que empiece en 0
+            new_round()
+        </script>
+    </section>
+</body>
+</html>
