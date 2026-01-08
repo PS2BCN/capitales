@@ -3,87 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Quiz World - Fixed</title>
+    <title>Retro Quiz World - 186 Nations</title>
     <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css" />
     <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #00001a; color: #00FF00; font-family: 'Courier New', Courier, monospace; }
         .retro-border { border: 2px solid #00FF00; box-shadow: 0 0 15px #00FF00; }
+        .flag-shadow { filter: drop-shadow(0 0 10px #00FF00); border: 2px solid #00FF00; }
         
-        /* BARRA DE TIEMPO (Roja) */
-        #timer-bar-visual { 
-            height: 100%; 
-            width: 100%; 
-            background-color: #ff0000; 
-            transition: width 1s linear; 
-            box-shadow: 0 0 10px #ff0000; 
-        }
-        
-        /* BARRA DE PROGRESO (Verde) */
-        #progress-bar-visual { 
+        /* Barra de Progreso (Verde Neón) */
+        #progress-bar-fill { 
             height: 100%; 
             width: 0%; 
             background-color: #00FF00; 
-            transition: width 0.4s ease-out; 
-            box-shadow: 0 0 15px #00FF00; 
+            transition: width 0.5s ease-in-out; 
+            box-shadow: 0 0 20px #00FF00; 
         }
 
-        .big-timer { font-size: 3rem; text-shadow: 0 0 10px #ff0000; }
-        button { border: 1px solid #00FF00; background: black; transition: all 0.2s; }
-        button:hover { background: #00FF00; color: black; }
+        button { border: 1px solid #00FF00; background: black; transition: all 0.2s; text-transform: uppercase; }
+        button:hover { background: #00FF00; color: black; box-shadow: 0 0 10px #00FF00; }
+        .glow-text { text-shadow: 0 0 5px #00FF00; }
     </style>
 </head>
 <body class="flex flex-col items-center p-4 min-h-screen">
 
     <div class="w-full max-w-md bg-black p-6 retro-border rounded-lg mt-6">
         
-        <div class="flex justify-between items-center mb-4">
-            <div id="system-clock" class="text-[10px] text-yellow-400 font-bold">SYSTEM: --:--:--</div>
-            <div class="text-center">
-                <span class="text-[10px] text-red-500 block uppercase font-bold">Time</span>
-                <div id="timer-display" class="big-timer text-red-500 font-bold">15</div>
+        <div class="flex justify-between items-center mb-6">
+            <div id="bcn-clock" class="text-lg text-yellow-400 font-bold glow-text">BARCELONA: --:--:--</div>
+            <div id="lives" class="text-red-500 text-xl tracking-tighter">❤❤❤❤❤</div>
+        </div>
+
+        <div class="flex justify-center mb-8">
+            <div class="p-2 bg-green-900/20 rounded">
+                <img id="country-flag" src="" class="h-32 flag-shadow block mx-auto">
             </div>
         </div>
 
-        <div class="w-full bg-gray-900 h-3 mb-6 border border-red-900">
-            <div id="timer-bar-visual"></div>
-        </div>
-
-        <div id="question-text" class="text-center text-xl mb-6 min-h-[80px] flex items-center justify-center text-green-400 font-bold uppercase">
-            CARGANDO...
+        <div id="question-text" class="text-center text-xl mb-6 min-h-[60px] flex items-center justify-center text-green-400 font-bold uppercase border-y border-green-900 py-4">
+            IDENTIFICANDO TERRITORIO...
         </div>
 
         <div class="grid grid-cols-1 gap-3" id="options-box">
-            <button id="opt0" class="py-3">-</button>
-            <button id="opt1" class="py-3">-</button>
-            <button id="opt2" class="py-3">-</button>
-            <button id="opt3" class="py-3">-</button>
+            <button id="opt0" class="py-4 text-lg">-</button>
+            <button id="opt1" class="py-4 text-lg">-</button>
+            <button id="opt2" class="py-4 text-lg">-</button>
+            <button id="opt3" class="py-4 text-lg">-</button>
         </div>
 
-        <div class="mt-8">
-            <div class="flex justify-between text-[10px] text-green-500 mb-1 font-bold">
-                <span>MISSION PROGRESS</span>
-                <span id="progress-stats">0/20</span>
+        <div class="mt-10">
+            <div class="flex justify-between text-[10px] text-green-500 mb-2 font-bold uppercase tracking-widest">
+                <span>Conquista Global</span>
+                <span id="progress-stats">0 / 186</span>
             </div>
-            <div class="w-full bg-gray-900 h-4 border border-green-900 p-[2px]">
-                <div id="progress-bar-visual"></div>
+            <div class="w-full bg-gray-900 h-6 border-2 border-green-500 p-[2px]">
+                <div id="progress-bar-fill"></div>
             </div>
         </div>
 
-        <div class="mt-4 flex justify-between text-sm uppercase">
-            <div id="game-score">SCORE: 0000</div>
-            <div id="game-lives" class="text-red-500">❤❤❤❤❤</div>
+        <div class="mt-4 text-center">
+            <div id="game-score" class="text-xl glow-text">PUNTOS: 0000</div>
         </div>
     </div>
 
     <section class="pyscript">
         <script type="py">
             import random
-            from datetime import datetime
             from pyscript import window, document
 
-         # --- BASE DE DATOS DE 186 PAÍSES ---
+            # Base de datos (asegúrate de que el último elemento sea el código ISO para la bandera)
+              # --- BASE DE DATOS DE 186 PAÍSES ---
 # Estructura: "País": ["Capital", "Ciudad2", "Ciudad3", "Ciudad4", "ISO"]
 PAISES = {
     "España": ["Madrid", "Barcelona", "Valencia", "Sevilla", "es"],
@@ -166,95 +156,78 @@ PAISES = {
     "Fiyi": ["Suva", "Lautoka", "Nadi", "Labasa", "fj"],
     # Puedes seguir extendiendo hasta los 186 manteniendo exactamente este formato
 }
+
+            # Estado del juego
             score = 0
             lives = 5
-            aciertos = 0
-            meta = 20
-            time_left = 15
             correct_ans = ""
-            timer_interval = None
+            paises_restantes = list(PAISES_DATA.keys())
+            total_inicial = len(PAISES_DATA) # Esto debería ser 186
 
-            def tick():
-                global time_left
-                time_left -= 1
-                
-                # Actualizar Número
-                document.getElementById("timer-display").innerText = str(max(0, time_left))
-                
-                # Actualizar Barra Roja
-                bar = document.getElementById("timer-bar-visual")
-                pct = (time_left / 15) * 100
-                bar.style.width = f"{max(0, pct)}%"
+            def get_bcn_time():
+                # Obtiene la hora de Barcelona/Madrid mediante JS para asegurar precisión
+                options = {"timeZone": "Europe/Madrid", "hour": "2-digit", "minute": "2-digit", "second": "2-digit", "hour12": False}
+                formatter = window.Intl.DateTimeFormat.new("es-ES", options)
+                now = window.Date.new()
+                document.getElementById("bcn-clock").innerText = f"BARCELONA: {formatter.format(now)}"
 
-                if time_left <= 0:
-                    fail()
-
-            def fail():
-                global lives, timer_interval
-                window.clearInterval(timer_interval)
-                lives -= 1
-                document.getElementById("game-lives").innerText = "❤" * lives
-                if lives <= 0:
-                    window.alert("GAME OVER")
-                    window.location.reload()
-                else:
-                    new_round()
+            def update_progress():
+                aciertos = total_inicial - len(paises_restantes)
+                pct = (aciertos / 186) * 100
+                document.getElementById("progress-bar-fill").style.width = f"{pct}%"
+                document.getElementById("progress-stats").innerText = f"{aciertos} / 186"
 
             def new_round():
-                global time_left, timer_interval, correct_ans
-                if timer_interval: window.clearInterval(timer_interval)
+                global correct_ans, paises_restantes
                 
-                # RESET VISUAL DE BARRAS
-                time_left = 15
-                document.getElementById("timer-display").innerText = "15"
-                t_bar = document.getElementById("timer-bar-visual")
-                t_bar.style.transition = "none"
-                t_bar.style.width = "100%"
-                
-                # Forzar reinicio de animación
-                def restart(): t_bar.style.transition = "width 1s linear"
-                window.setTimeout(restart, 50)
+                if not paises_restantes or lives <= 0:
+                    document.getElementById("question-text").innerText = "¡MISIÓN COMPLETADA!"
+                    return
 
-                # Nueva Pregunta
-                pais = random.choice(list(PAISES.keys()))
-                opciones = PAISES[pais][:]
-                correct_ans = opciones[0]
+                # Selección sin repetir
+                pais_actual = random.choice(paises_restantes)
+                paises_restantes.remove(pais_actual) # Lo quitamos para no repetir
+
+                datos = PAISES_DATA[pais_actual]
+                correct_ans = datos[0]
+                
+                # Actualizar Bandera
+                iso_code = datos[4]
+                flag_img = document.getElementById("country-flag")
+                flag_img.src = f"https://flagcdn.com/w320/{iso_code}.png"
+
+                document.getElementById("question-text").innerText = f"¿CAPITAL DE {pais_actual.upper()}?"
+                
+                # Opciones (las 4 ciudades del país barajadas)
+                opciones = datos[0:4]
                 random.shuffle(opciones)
-
-                document.getElementById("question-text").innerText = f"¿CAPITAL DE {pais.upper()}?"
                 
                 for i in range(4):
                     btn = document.getElementById(f"opt{i}")
                     btn.innerText = opciones[i]
 
-                timer_interval = window.setInterval(tick, 1000)
-
-            def check(evt):
-                global score, aciertos
+            def check_answer(evt):
+                global score, lives
                 if evt.target.innerText == correct_ans:
-                    score += 25
-                    aciertos += 1
-                    document.getElementById("game-score").innerText = f"SCORE: {score:04d}"
-                    
-                    # Actualizar Barra Verde
-                    prog_bar = document.getElementById("progress-bar-visual")
-                    prog_text = document.getElementById("progress-stats")
-                    pct_prog = (aciertos / meta) * 100
-                    prog_bar.style.width = f"{min(100, pct_prog)}%"
-                    prog_text.innerText = f"{aciertos}/{meta}"
-                    
+                    score += 50
+                    document.getElementById("game-score").innerText = f"PUNTOS: {score:04d}"
+                    update_progress()
                     new_round()
                 else:
-                    fail()
+                    lives -= 1
+                    document.getElementById("lives").innerText = "❤" * lives
+                    if lives <= 0:
+                        window.alert(f"SISTEMA CAÍDO. Puntos finales: {score}")
+                        window.location.reload()
+                    else:
+                        new_round()
 
-            def clock_update():
-                document.getElementById("system-clock").innerText = f"SYSTEM: {datetime.now().strftime('%H:%M:%S')}"
-
-            # Iniciar
+            # Iniciar Reloj e Interfaz
             for i in range(4):
-                document.getElementById(f"opt{i}").onclick = check
-            
-            window.setInterval(clock_update, 1000)
+                document.getElementById(f"opt{i}").onclick = check_answer
+
+            window.setInterval(get_bcn_time, 1000)
+            update_progress()
             new_round()
         </script>
     </section>
