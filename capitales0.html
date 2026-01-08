@@ -11,27 +11,29 @@
         body { background-color: #00001a; color: #00FF00; font-family: 'Courier New', Courier, monospace; }
         .retro-border { border: 2px solid #00FF00; box-shadow: 0 0 15px #00FF00; }
         
-        /* Contenedor de bandera mejorado */
-        .flag-frame { 
-            border: 2px solid #00FF00; 
-            background-color: #000; 
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        /* MARCO DE BANDERA MEJORADO */
+        .flag-monitor { 
+            border: 4px solid #00FF00; 
+            background-color: #051a05; 
+            box-shadow: inset 0 0 20px #000, 0 0 15px rgba(0, 255, 0, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            padding: 10px; /* Espacio entre bandera y marco */
+            border-radius: 4px;
         }
 
         #progress-bar-fill { 
             height: 100%; 
-            width: 0%; 
+            width: 0%; /* Empieza en 0 */
             background-color: #00FF00; 
-            transition: width 0.5s ease-out; 
+            transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
             box-shadow: 0 0 15px #00FF00; 
         }
 
-        button { border: 1px solid #00FF00; background: black; transition: all 0.2s; text-transform: uppercase; }
-        button:hover { background: #00FF00; color: black; box-shadow: 0 0 10px #00FF00; }
+        button { border: 1px solid #00FF00; background: black; transition: all 0.2s; text-transform: uppercase; font-weight: bold; }
+        button:hover { background: #00FF00; color: black; box-shadow: 0 0 15px #00FF00; transform: scale(1.02); }
+        .glow-text { text-shadow: 0 0 8px #00FF00; }
     </style>
 </head>
 <body class="flex flex-col items-center p-4 min-h-screen">
@@ -39,25 +41,25 @@
     <div class="w-full max-w-md bg-black p-6 retro-border rounded-lg mt-6">
         
         <div class="flex justify-between items-center mb-6">
-            <div id="game-score" class="text-xl font-bold">PUNTOS: 0000</div>
+            <div id="game-score" class="text-xl font-bold glow-text">PUNTOS: 0000</div>
             <div id="lives" class="text-red-500 text-xl tracking-tighter font-bold">❤❤❤❤❤</div>
         </div>
 
         <div class="flex justify-center mb-6">
-            <div class="flag-frame w-64 h-40">
-                <img id="country-flag" src="" class="max-h-full max-w-full object-contain">
+            <div class="flag-monitor w-full h-48">
+                <img id="country-flag" src="" class="max-h-full max-w-full shadow-lg" style="display: none;">
             </div>
         </div>
 
         <div id="question-text" class="text-center text-lg mb-6 min-h-[60px] flex items-center justify-center text-green-400 font-bold uppercase border-y border-green-900 py-4 px-2">
-            ESPERANDO SEÑAL...
+            CONECTANDO CON SATÉLITE...
         </div>
 
         <div class="grid grid-cols-1 gap-3" id="options-box">
-            <button id="opt0" class="py-4 text-lg font-bold">-</button>
-            <button id="opt1" class="py-4 text-lg font-bold">-</button>
-            <button id="opt2" class="py-4 text-lg font-bold">-</button>
-            <button id="opt3" class="py-4 text-lg font-bold">-</button>
+            <button id="opt0" class="py-4 text-lg">-</button>
+            <button id="opt1" class="py-4 text-lg">-</button>
+            <button id="opt2" class="py-4 text-lg">-</button>
+            <button id="opt3" class="py-4 text-lg">-</button>
         </div>
 
         <div class="mt-8">
@@ -65,7 +67,7 @@
                 <span>CONQUISTA GLOBAL</span>
                 <span id="progress-stats">0 / 186</span>
             </div>
-            <div class="w-full bg-gray-900 h-5 border border-green-500 p-[1px]">
+            <div class="w-full bg-gray-900 h-6 border-2 border-green-500 p-[2px] rounded-sm">
                 <div id="progress-bar-fill"></div>
             </div>
         </div>
@@ -76,8 +78,9 @@
             from pyscript import window, document
             import random
 
-            # 1. DEFINIR DATOS PRIMERO (Sin espacios al inicio de la línea)
+            # DICCIONARIO BASE
             PAISES_DATA = {
+
     "España": ["Madrid", "Barcelona", "Valencia", "Sevilla", "es"],
     "Francia": ["París", "Marsella", "Lyon", "Toulouse", "fr"],
     "Italia": ["Roma", "Milán", "Nápoles", "Turín", "it"],
@@ -159,70 +162,11 @@
     # Puedes seguir extendiendo hasta los 186 manteniendo exactamente este formato
             }
 
-            # 2. VARIABLES DE ESTADO
             score = 0
             lives = 5
             correct_ans = ""
             paises_restantes = list(PAISES_DATA.keys())
-            total_meta = 186 # Cambiar al total real de tu lista
+            total_meta = 186 
+            aciertos_contados = 0
 
-            def update_ui():
-                aciertos = total_meta - len(paises_restantes)
-                pct = (aciertos / total_meta) * 100
-                document.getElementById("progress-bar-fill").style.width = f"{pct}%"
-                document.getElementById("progress-stats").innerText = f"{aciertos} / {total_meta}"
-
-            def new_round():
-                global correct_ans, paises_restantes
-                
-                if not paises_restantes or lives <= 0:
-                    document.getElementById("question-text").innerText = "¡OBJETIVO LOGRADO!"
-                    return
-
-                # Selección aleatoria sin repetir
-                pais = random.choice(paises_restantes)
-                paises_restantes.remove(pais)
-
-                datos = PAISES_DATA[pais]
-                correct_ans = datos[0]
-                
-                # Cargar Bandera (FlagCDN usa códigos en minúscula)
-                iso = datos[4].lower()
-                img = document.getElementById("country-flag")
-                img.src = f"https://flagcdn.com/w320/{iso}.png"
-
-                document.getElementById("question-text").innerText = f"¿CAPITAL DE {pais.upper()}?"
-                
-                opciones = datos[0:4]
-                random.shuffle(opciones)
-                
-                for i in range(4):
-                    btn = document.getElementById(f"opt{i}")
-                    btn.innerText = opciones[i]
-
-            def check_click(evt):
-                global score, lives
-                if evt.target.innerText == correct_ans:
-                    score += 50
-                    document.getElementById("game-score").innerText = f"PUNTOS: {score:04d}"
-                    update_ui()
-                    new_round()
-                else:
-                    lives -= 1
-                    document.getElementById("lives").innerText = "❤" * max(0, lives)
-                    if lives <= 0:
-                        window.alert("SISTEMA BLOQUEADO")
-                        window.location.reload()
-                    else:
-                        new_round()
-
-            # 3. VINCULAR EVENTOS E INICIAR
-            for i in range(4):
-                document.getElementById(f"opt{i}").onclick = check_click
-
-            update_ui()
-            new_round()
-        </script>
-    </section>
-</body>
-</html>
+            def update
